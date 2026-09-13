@@ -1,0 +1,21 @@
+# 비밀값 — 절대 커밋 금지
+.env
+.env.*
+*.pem
+*.key
+secrets/
+credentials*.json
+
+# 실험용 찌꺼기
+node_modules/
+__pycache__/
+.venv/
+venv/
+dist/
+build/
+.next/
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
