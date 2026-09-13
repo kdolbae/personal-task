@@ -6,6 +6,17 @@
 - "내가 뭐 하고 있었지?" → 이 파일만 보면 된다
 - 규칙은 [CONVENTIONS.md](CONVENTIONS.md)
 
+## 관제탑 (웹 페이지)
+
+[`index.html`](index.html) — 배포·코드·대화 링크로 바로 들어가는 상황판.
+
+- **Artifact (비공개, 지금 바로 열림)**: https://claude.ai/code/artifact/8db185b9-ddea-45b5-8df8-a5acb0c3d0b6
+- **Vercel로 올리려면**: 이 저장소를 import 하면 끝. 빌드 설정 없음 (정적 HTML 한 장).
+  단 **Deployment Protection을 켤 것** — 켜지 않으면 private 저장소 내용이 공개 URL로 나간다.
+
+프로젝트를 추가하거나 고칠 때는 `index.html` 안의 `PROJECTS` 배열만 고치면 된다.
+Claude Code 대화 링크는 코드를 고치지 않고 페이지에서 직접 넣을 수 있다.
+
 마지막 정리: 2026-09-13
 
 ---

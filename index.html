@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ARTIFACT-BODY-START -->
+<title>관제탑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --ground:   #E9ECEF;
+    --surface:  #FFFFFF;
+    --raised:   #F4F6F8;
+    --ink:      #14181F;
+    --muted:    #5A6674;
+    --faint:    #8C97A3;
+    --line:     #D2D8E0;
+    --hairline: #E2E7EC;
+    --brass:    #8A5F0C;
+    --brass-dim:#B98A2E;
+    --on-brass: #FFFFFF;
+    --live:     #0C6E4E;
+    --dev:      #2456A6;
+    --warn:     #B03A1C;
+    --idle:     #67727F;
+    --tint:     rgba(138, 95, 12, .09);
+    --shadow:   0 1px 2px rgba(20, 24, 31, .05), 0 6px 18px -10px rgba(20, 24, 31, .18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:   #10131A;
+      --surface:  #181C25;
+      --raised:   #1F242F;
+      --ink:      #E6EAF0;
+      --muted:    #8B96A5;
+      --faint:    #6B7686;
+      --line:     #2A3039;
+      --hairline: #232935;
+      --brass:    #E0A63E;
+      --brass-dim:#9A7629;
+      --on-brass: #10131A;
+      --live:     #3FD495;
+      --dev:      #78AEFF;
+      --warn:     #FF8462;
+      --idle:     #79848F;
+      --tint:     rgba(224, 166, 62, .12);
+      --shadow:   0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px -10px rgba(0, 0, 0, .7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:   #10131A;
+    --surface:  #181C25;
+    --raised:   #1F242F;
+    --ink:      #E6EAF0;
+    --muted:    #8B96A5;
+    --faint:    #6B7686;
+    --line:     #2A3039;
+    --hairline: #232935;
+    --brass:    #E0A63E;
+    --brass-dim:#9A7629;
+    --on-brass: #10131A;
+    --live:     #3FD495;
+    --dev:      #78AEFF;
+    --warn:     #FF8462;
+    --idle:     #79848F;
+    --tint:     rgba(224, 166, 62, .12);
+    --shadow:   0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px -10px rgba(0, 0, 0, .7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo",
+                 "Malgun Gothic", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1020px;
+    margin-inline: auto;
+    padding-inline: 20px;
+    padding-block: 40px 64px;
+  }
+
+  /* ---------- 머리말 ---------- */
+
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .brand { display: flex; align-items: baseline; gap: 12px; }
+  .brand h1 {
+    margin: 0;
+    font-size: clamp(28px, 5vw, 38px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+  }
+  .brand .mark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    color: var(--brass);
+    border: 1px solid var(--brass);
+    border-radius: 3px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+  .tagline {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 46ch;
+  }
+
+  .counts {
+    display: flex;
+    gap: 22px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .counts div { display: flex; flex-direction: column; gap: 1px; }
+  .counts b { font-size: 22px; font-weight: 600; line-height: 1.1; }
+  .counts span {
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--faint);
+    text-transform: uppercase;
+  }
+  .counts .c-live b { color: var(--live); }
+  .counts .c-dev  b { color: var(--dev); }
+  .counts .c-warn b { color: var(--warn); }
+  .counts .c-idle b { color: var(--idle); }
+
+  /* ---------- 구역 ---------- */
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 44px 0 12px;
+  }
+  .section-head h2 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .section-head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* ---------- 보드 ---------- */
+
+  .board {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr) auto;
+    gap: 4px 18px;
+    align-items: center;
+    padding: 16px 20px;
+    border-left: 3px solid transparent;
+  }
+  .row + .row { border-top: 1px solid var(--hairline); }
+  .row[data-status="live"] { border-left-color: var(--live); }
+  .row[data-status="dev"]  { border-left-color: var(--dev); }
+  .row[data-status="warn"] { border-left-color: var(--warn); }
+  .row[data-status="idle"] { border-left-color: var(--idle); }
+
+  .code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    color: var(--faint);
+    align-self: start;
+    padding-top: 4px;
+  }
+
+  .main { min-width: 0; }
+  .title-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+  .title-line h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+  }
+  .pill {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .pill[data-status="live"] { color: var(--live); }
+  .pill[data-status="dev"]  { color: var(--dev); }
+  .pill[data-status="warn"] { color: var(--warn); }
+  .pill[data-status="idle"] { color: var(--idle); }
+
+  .role { margin: 3px 0 0; color: var(--muted); font-size: 14px; }
+  .flag {
+    margin: 7px 0 0;
+    font-size: 13px;
+    color: var(--warn);
+    display: flex;
+    gap: 7px;
+  }
+  .flag::before { content: "▲"; font-size: 9px; padding-top: 4px; flex: none; }
+
+  .meta {
+    margin: 7px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .meta .lock { color: var(--brass-dim); }
+
+  /* ---------- 링크 ---------- */
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+    align-self: start;
+  }
+  .lnk {
+    font-family: "IBM Plex Sans KR", sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 5px 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+  }
+  .lnk:hover { border-color: var(--brass); color: var(--brass); }
+  .lnk.ghost {
+    background: transparent;
+    color: var(--faint);
+    border-style: dashed;
+  }
+  .lnk.ghost:hover { color: var(--brass); border-color: var(--brass); }
+  .lnk[aria-disabled="true"] {
+    opacity: .42;
+    cursor: default;
+    pointer-events: none;
+  }
+  .lnk:focus-visible,
+  .icon-btn:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+
+  .chat-group { display: flex; gap: 0; }
+  .chat-group .lnk { border-radius: 5px 0 0 5px; }
+  .icon-btn {
+    font-family: "IBM Plex Sans KR", sans-serif;
+    font-size: 12.5px;
+    color: var(--faint);
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-left: none;
+    border-radius: 0 5px 5px 0;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: color .12s ease, border-color .12s ease;
+  }
+  .icon-btn:hover { color: var(--brass); }
+
+  /* ---------- 링크 입력 ---------- */
+
+  .editor {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--tint);
+    border-radius: 6px;
+  }
+  .editor label {
+    font-size: 12px;
+    color: var(--muted);
+    flex: none;
+  }
+  .editor input {
+    flex: 1 1 260px;
+    min-width: 0;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 7px 10px;
+  }
+  .editor .lnk.primary {
+    background: var(--brass);
+    border-color: var(--brass);
+    color: var(--on-brass);
+  }
+  .editor .lnk.primary:hover { opacity: .88; }
+
+  .save-note {
+    flex-basis: 100%;
+    font-size: 11.5px;
+    color: var(--faint);
+    margin: 0;
+  }
+
+  /* ---------- 빈 저장소 ---------- */
+
+  .scrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .scrap-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+  .scrap-item code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .scrap-item span { color: var(--faint); font-size: 12.5px; }
+
+  /* ---------- 꼬리말 ---------- */
+
+  footer {
+    margin-top: 48px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--faint);
+  }
+  footer a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line); }
+  footer a:hover { color: var(--brass); border-bottom-color: var(--brass); }
+  footer .sync { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  @media (max-width: 680px) {
+    .row {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 16px;
+    }
+    .code { padding-top: 0; }
+    .links { justify-content: flex-start; }
+    .masthead { align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <div class="brand">
+        <h1>관제탑</h1>
+        <span class="mark">TOWER</span>
+      </div>
+      <p class="tagline">지금 돌아가는 것, 만들고 있는 것, 손봐야 하는 것. 한 화면에서 바로 들어간다.</p>
+    </div>
+    <nav class="counts" id="counts" aria-label="상태별 개수"></nav>
+  </header>
+
+  <div class="section-head"><h2>운영 현황</h2></div>
+  <div class="board" id="board"></div>
+
+  <div class="section-head"><h2>빈 저장소</h2></div>
+  <div class="scrap" id="scrap"></div>
+
+  <footer>
+    <span>색인 저장소 · <a href="https://github.com/kdolbae/personal-task">kdolbae/personal-task</a></span>
+    <span class="sync" id="sync">기준 2026-09-13</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+   * 프로젝트 목록. 여기만 고치면 페이지 전체가 바뀐다.
+   * status: live(운영중) | dev(개발중) | warn(점검 필요) | idle(빈 것)
+   * chat:   Claude Code 대화 링크. 비워두면 페이지에서 직접 넣을 수 있다.
+   * ---------------------------------------------------------------- */
+  var PROJECTS = [
+    {
+      code: "PILOT", name: "파일럿", repo: "nanomaster-ads", priv: true,
+      role: "네이버 검색광고를 자동으로 운영하는 도구. 계기판에 넘길 데이터를 만든다.",
+      status: "dev", deploy: null, updated: "2026-09-13", chat: ""
+    },
+    {
+      code: "PANEL", name: "계기판", repo: "nanomaster-ads-site", priv: false,
+      role: "광고 운영 상황을 보여주는 자동 갱신 대시보드.",
+      status: "live", deploy: "https://nanomaster-ads-auvk.vercel.app",
+      updated: "2026-09-12", chat: "",
+      flag: "배포된 저장소 중 유일하게 public이다. 광고 데이터가 노출되는지 확인할 것."
+    },
+    {
+      code: "HANGAR", name: "격납고", repo: "manageapp_sb", priv: true,
+      role: "개인 일정과 업무를 관리하는 앱. Supabase를 백엔드로 쓴다.",
+      status: "warn", deploy: "https://manageapp-sb.vercel.app",
+      updated: "2026-09-12", chat: "",
+      flag: "기본 브랜치가 codex/uffice-sync로 되어 있다. 열린 이슈도 1개 있다."
+    },
+    {
+      code: "UNKNOWN", name: "미상", repo: "mjcon", priv: true,
+      role: "정체 불명. 배포까지 되어 있는데 저장소에 설명이 한 줄도 없다.",
+      status: "live", deploy: "https://mjcon.vercel.app",
+      updated: "2026-09-12", chat: "",
+      flag: "이게 뭔지부터 적을 것. 이름도 지어줄 것."
+    },
+    {
+      code: "RUNWAY", name: "활주로", repo: "nanomaster-web", priv: true,
+      role: "나노마스터 웹사이트. 정적 페이지 중심.",
+      status: "live", deploy: "https://nanomaster-web.vercel.app",
+      updated: "2026-09-11", chat: "",
+      flag: "29MB다. 이미지·폰트가 저장소에 그대로 들어가 있을 가능성이 크다."
+    },
+    {
+      code: "TOWER", name: "관제탑", repo: "personal-task", priv: true,
+      role: "이 페이지와 프로젝트 색인. 실험도 여기서 시작한다.",
+      status: "dev", deploy: null, updated: "2026-09-13", chat: ""
+    }
+  ];
+
+  var SCRAP = [
+    { repo: "nanomaster", why: "7KB. 이름만 선점하고 방치" },
+    { repo: "jipdarie",   why: "커밋 0개. 8월에 만들고 방치" }
+  ];
+
+  var LABEL = { live: "운영중", dev: "개발중", warn: "점검 필요", idle: "빈 것" };
+  var GH = "https://github.com/kdolbae/";
+
+  /* ---------- 대화 링크 저장 ---------- */
+
+  var STORE_KEY = "tower.chat.v1";
+  var overrides = {};
+  var dbDoc = null;
+
+  function readLocal() {
+    try {
+      return JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+    } catch (e) { return {}; }
+  }
+  function writeLocal(o) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(o)); } catch (e) {}
+  }
+
+  function persist() {
+    writeLocal(overrides);
+    if (dbDoc) {
+      dbDoc.set({ chat: overrides }).catch(function () {
+        setSync("이 브라우저에만 저장됨");
+      });
+    }
+  }
+
+  function setSync(msg) {
+    var el = document.getElementById("sync");
+    if (el) el.textContent = msg;
+  }
+
+  function chatOf(p) {
+    return (overrides[p.repo] != null ? overrides[p.repo] : p.chat) || "";
+  }
+
+  /* ---------- 그리기 ---------- */
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function linkBtn(label, href, title) {
+    var a = el("a", "lnk", label);
+    if (href) {
+      a.href = href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      if (title) a.title = title;
+    } else {
+      a.setAttribute("aria-disabled", "true");
+      a.title = "배포된 주소 없음";
+    }
+    return a;
+  }
+
+  function renderCounts() {
+    var n = { live: 0, dev: 0, warn: 0, idle: SCRAP.length };
+    PROJECTS.forEach(function (p) { n[p.status] = (n[p.status] || 0) + 1; });
+    var host = document.getElementById("counts");
+    host.textContent = "";
+    [["live", "운영중"], ["dev", "개발중"], ["warn", "점검"], ["idle", "빈 것"]]
+      .forEach(function (pair) {
+        var d = el("div", "c-" + pair[0]);
+        d.appendChild(el("b", null, String(n[pair[0]] || 0)));
+        d.appendChild(el("span", null, pair[1]));
+        host.appendChild(d);
+      });
+  }
+
+  function openEditor(row, p) {
+    if (row.querySelector(".editor")) return;
+    var box = el("div", "editor");
+
+    var lab = el("label", null, "대화 링크");
+    lab.htmlFor = "chat-" + p.repo;
+
+    var input = document.createElement("input");
+    input.type = "url";
+    input.id = "chat-" + p.repo;
+    input.placeholder = "https://claude.ai/code/session_...";
+    input.value = chatOf(p);
+
+    var save = el("button", "lnk primary", "저장");
+    var clear = el("button", "lnk ghost", "지우기");
+    var cancel = el("button", "lnk", "취소");
+
+    var note = el("p", "save-note",
+      "claude.ai/code 에서 해당 대화를 열고 주소창의 링크를 붙여넣으세요.");
+
+    function close() { box.remove(); }
+    function commit(value) {
+      overrides[p.repo] = value;
+      persist();
+      close();
+      render();
+    }
+
+    save.addEventListener("click", function () { commit(input.value.trim()); });
+    clear.addEventListener("click", function () { commit(""); });
+    cancel.addEventListener("click", close);
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); commit(input.value.trim()); }
+      if (e.key === "Escape") { e.preventDefault(); close(); }
+    });
+
+    [lab, input, save, clear, cancel, note].forEach(function (n) { box.appendChild(n); });
+    row.appendChild(box);
+    input.focus();
+    input.select();
+  }
+
+  function renderRow(p) {
+    var row = el("div", "row");
+    row.dataset.status = p.status;
+
+    row.appendChild(el("div", "code", p.code));
+
+    var main = el("div", "main");
+
+    var line = el("div", "title-line");
+    line.appendChild(el("h3", null, p.name));
+    var pill = el("span", "pill", LABEL[p.status]);
+    pill.dataset.status = p.status;
+    line.appendChild(pill);
+    main.appendChild(line);
+
+    main.appendChild(el("p", "role", p.role));
+    if (p.flag) main.appendChild(el("p", "flag", p.flag));
+
+    var meta = el("div", "meta");
+    meta.appendChild(el("span", null, p.repo));
+    if (p.priv) meta.appendChild(el("span", "lock", "private"));
+    meta.appendChild(el("span", null, "최근 " + p.updated));
+    main.appendChild(meta);
+
+    row.appendChild(main);
+
+    var links = el("div", "links");
+    links.appendChild(linkBtn("배포", p.deploy, p.deploy || ""));
+    links.appendChild(linkBtn("코드", GH + p.repo, GH + p.repo));
+
+    var chat = chatOf(p);
+    if (chat) {
+      var group = el("div", "chat-group");
+      group.appendChild(linkBtn("대화", chat, chat));
+      var edit = el("button", "icon-btn", "수정");
+      edit.setAttribute("aria-label", p.name + " 대화 링크 수정");
+      edit.addEventListener("click", function () { openEditor(row, p); });
+      group.appendChild(edit);
+      links.appendChild(group);
+    } else {
+      var add = el("button", "lnk ghost", "+ 대화 링크");
+      add.setAttribute("aria-label", p.name + " 대화 링크 추가");
+      add.addEventListener("click", function () { openEditor(row, p); });
+      links.appendChild(add);
+    }
+
+    row.appendChild(links);
+    return row;
+  }
+
+  function render() {
+    renderCounts();
+
+    var board = document.getElementById("board");
+    board.textContent = "";
+    PROJECTS.forEach(function (p) { board.appendChild(renderRow(p)); });
+
+    var scrap = document.getElementById("scrap");
+    scrap.textContent = "";
+    SCRAP.forEach(function (s) {
+      var item = el("div", "scrap-item");
+      var c = el("code", null, s.repo);
+      item.appendChild(c);
+      item.appendChild(el("span", null, s.why));
+      var a = linkBtn("코드", GH + s.repo);
+      item.appendChild(a);
+      scrap.appendChild(item);
+    });
+  }
+
+  /* ---------- 시작 ---------- */
+
+  overrides = readLocal();
+  render();
+
+  // Artifact로 열렸다면 대화 링크를 계정에 저장해 기기 간에 공유한다.
+  // 그 밖의 환경(Vercel, 로컬 파일)에서는 브라우저에만 저장된다.
+  (function connect() {
+    if (!window.claude || typeof window.claude.use !== "function") return;
+    window.claude.use("db").then(function (db) {
+      if (!db) return;
+      dbDoc = db.doc("board/chat-links");
+      dbDoc.onSnapshot(function (snap) {
+        var data = snap && typeof snap.data === "function" ? snap.data() : null;
+        var next = (data && data.chat) || {};
+        overrides = Object.assign({}, readLocal(), next);
+        writeLocal(overrides);
+        setSync("기준 2026-09-13 · 링크 동기화됨");
+        render();
+      }, function () {
+        setSync("기준 2026-09-13 · 이 브라우저에만 저장됨");
+      });
+    }).catch(function () {});
+  })();
+})();
+</script>
+<!-- ARTIFACT-BODY-END -->
+</body>
+</html>
