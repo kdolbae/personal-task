@@ -450,48 +450,50 @@
    * ---------------------------------------------------------------- */
   var PROJECTS = [
     {
-      code: "PILOT", name: "파일럿", repo: "nanomaster-ads", priv: true,
-      role: "네이버 검색광고를 자동으로 운영하는 도구. 계기판에 넘길 데이터를 만든다.",
-      status: "dev", deploy: null, updated: "2026-09-13", chat: ""
-    },
-    {
-      code: "PANEL", name: "계기판", repo: "nanomaster-ads-site", priv: false,
-      role: "광고 운영 상황을 보여주는 자동 갱신 대시보드.",
-      status: "live", deploy: "https://nanomaster-ads-auvk.vercel.app",
-      updated: "2026-09-12", chat: "",
-      flag: "배포된 저장소 중 유일하게 public이다. 광고 데이터가 노출되는지 확인할 것."
-    },
-    {
-      code: "HANGAR", name: "격납고", repo: "manageapp_sb", priv: true,
-      role: "개인 일정과 업무를 관리하는 앱. Supabase를 백엔드로 쓴다.",
-      status: "warn", deploy: "https://manageapp-sb.vercel.app",
-      updated: "2026-09-12", chat: "",
-      flag: "기본 브랜치가 codex/uffice-sync로 되어 있다. 열린 이슈도 1개 있다."
-    },
-    {
-      code: "UNKNOWN", name: "미상", repo: "mjcon", priv: true,
-      role: "정체 불명. 배포까지 되어 있는데 저장소에 설명이 한 줄도 없다.",
-      status: "live", deploy: "https://mjcon.vercel.app",
-      updated: "2026-09-12", chat: "",
-      flag: "이게 뭔지부터 적을 것. 이름도 지어줄 것."
-    },
-    {
       code: "RUNWAY", name: "활주로", repo: "nanomaster-web", priv: true,
-      role: "나노마스터 웹사이트. 정적 페이지 중심.",
-      status: "live", deploy: "https://nanomaster-web.vercel.app",
-      updated: "2026-09-11", chat: "",
-      flag: "29MB다. 이미지·폰트가 저장소에 그대로 들어가 있을 가능성이 크다."
+      role: "나노마스터 회사 사이트 + 관리화면(/admin) + 사이트 자동화(유피스·단지·리뷰). 배포 브랜치는 gallant.",
+      status: "live", deploy: "https://nanomaster.co.kr", updated: "2026-09-26", chat: "",
+      flag: "기본 브랜치 master ≠ 배포 브랜치 gallant. 열린 PR 13개, 머지된 브랜치 17개 남음."
+    },
+    {
+      code: "PILOT", name: "파일럿", repo: "nanomaster-ads", priv: true,
+      role: "광고 실행 코드 전부. 네이버·메타 API, 누적 데이터, 상황판 생성. 결과는 nanomaster-web /admin/ads 가 읽는다.",
+      status: "live", deploy: null, updated: "2026-09-26", chat: ""
+    },
+    {
+      code: "NMSOL", name: "엔엠솔루션", repo: "nmsolution", priv: false,
+      role: "엔엠솔루션 회사 사이트. 광고는 nanomaster-ads 의 nmsolution 브랜드.",
+      status: "live", deploy: "https://www.nm-solution.co.kr", updated: "2026-09-24", chat: ""
+    },
+    {
+      code: "OFFICE", name: "집대리 관리", repo: "manageapp", priv: true,
+      role: "집대리 관리 시스템 (Next.js + Supabase). 협력업체·계약·수납·정산. 유피스 대체. UPIS 분석 문서 포함.",
+      status: "dev", deploy: null, updated: "2026-09-26", chat: ""
+    },
+    {
+      code: "HOME", name: "집대리 앱", repo: "jipdarie", priv: true,
+      role: "집대리 소비자 앱 (React + Vite + Capacitor). 입주 준비·하자·견적. 관리 기능은 manageapp API.",
+      status: "dev", deploy: null, updated: "2026-09-26", chat: "",
+      flag: "기본 브랜치를 main 으로 바꿀 것. 열린 PR 5개가 체인."
+    },
+    {
+      code: "MJCON", name: "만정회중", repo: "mjcon", priv: true,
+      role: "만정회중 전도인 명단·검색·인쇄. 다른 것과 섞지 않는다.",
+      status: "live", deploy: "https://mjcon.vercel.app", updated: "2026-09-26", chat: ""
     },
     {
       code: "TOWER", name: "관제탑", repo: "personal-task", priv: true,
-      role: "이 페이지와 프로젝트 색인. 실험도 여기서 시작한다.",
-      status: "dev", deploy: null, updated: "2026-09-13", chat: ""
+      role: "이 페이지와 프로젝트 색인. 저장소 구분 규칙은 README.",
+      status: "dev", deploy: "https://personal-task-flame.vercel.app", updated: "2026-09-26", chat: ""
     }
   ];
 
   var SCRAP = [
-    { repo: "nanomaster", why: "7KB. 이름만 선점하고 방치" },
-    { repo: "jipdarie",   why: "커밋 0개. 8월에 만들고 방치" }
+    { repo: "nanomaster-ads-site", why: "상황판 복사본. 9/26 게시 중단 → 보관" },
+    { repo: "advertising-",        why: "메타 맞춤타겟 변환기 → nanomaster-ads/scripts 로 이동 → 보관" },
+    { repo: "nanomaster",          why: "README 한 줄 + 카페24 백업 셸 (비밀번호 적혀 있음, 바꿀 것) → 보관" },
+    { repo: "manageapp_sb",        why: "유피스 버튼 동기화. 9/9 이후 중단 → 보관" },
+    { repo: "Gridworks",           why: "빈 저장소 → 보관" }
   ];
 
   var LABEL = { live: "운영중", dev: "개발중", warn: "점검 필요", idle: "빈 것" };
