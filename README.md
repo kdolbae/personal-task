@@ -9,52 +9,76 @@
 ## 관제탑 (웹 페이지)
 
 [`index.html`](index.html) — 배포·코드·대화 링크로 바로 들어가는 상황판.
+Vercel(personal-task-flame)에 올라가 있다. 프로젝트를 고칠 때는 `index.html` 안의 `PROJECTS` 배열만 고치면 된다.
 
-- **Artifact (비공개, 지금 바로 열림)**: https://claude.ai/code/artifact/8db185b9-ddea-45b5-8df8-a5acb0c3d0b6
-- **Vercel로 올리려면**: 이 저장소를 import 하면 끝. 빌드 설정 없음 (정적 HTML 한 장).
-  단 **Deployment Protection을 켤 것** — 켜지 않으면 private 저장소 내용이 공개 URL로 나간다.
-
-프로젝트를 추가하거나 고칠 때는 `index.html` 안의 `PROJECTS` 배열만 고치면 된다.
-Claude Code 대화 링크는 코드를 고치지 않고 페이지에서 직접 넣을 수 있다.
-
-마지막 정리: 2026-09-13
+마지막 정리: 2026-09-26 (저장소 전수 점검)
 
 ---
 
-## 지금 살아있는 것
+## 저장소 구분 — 어디에 무엇을 넣나
 
-| 프로젝트 | 상태 | 무엇 | 스택 | 배포 | 저장소 | 최근 |
-|---|---|---|---|---|---|---|
-| [나노마스터 광고 도구](projects/nanomaster-ads.md) | 🟢 개발중 | 네이버 검색광고 자동 운영 도구 + 상황판 | HTML | — | [nanomaster-ads](https://github.com/kdolbae/nanomaster-ads) 🔒 | 09-13 |
-| [나노마스터 광고 상황판](projects/nanomaster-ads-site.md) | 🚀 배포됨 | 위 도구의 결과를 보여주는 자동 갱신 대시보드 | HTML | [nanomaster-ads-auvk](https://nanomaster-ads-auvk.vercel.app) | [nanomaster-ads-site](https://github.com/kdolbae/nanomaster-ads-site) | 09-12 |
-| [mjcon](projects/mjcon.md) | 🚀 배포됨 | *(설명 없음 — 채울 것)* | TypeScript | [mjcon](https://mjcon.vercel.app) | [mjcon](https://github.com/kdolbae/mjcon) 🔒 | 09-12 |
-| [개인 관리 프로그램](projects/manageapp-sb.md) | ⚠️ 배포됨 | 개인 관리 프로그램 | TypeScript + Supabase | [manageapp-sb](https://manageapp-sb.vercel.app) | [manageapp_sb](https://github.com/kdolbae/manageapp_sb) 🔒 | 09-12 |
-| [나노마스터 웹](projects/nanomaster-web.md) | 🚀 배포됨 | 회사 웹사이트 | CSS 중심 | [nanomaster-web](https://nanomaster-web.vercel.app) | [nanomaster-web](https://github.com/kdolbae/nanomaster-web) 🔒 | 09-11 |
+새 기능을 어디에 넣을지 헷갈리면 이 질문 순서대로 고른다.
 
-## 실험 중
+| 질문 | 저장소 |
+|---|---|
+| 광고비가 나가는 코드인가? (네이버·메타 API, 입찰, 키워드, 상황판 생성) | **nanomaster-ads** |
+| 사이트 방문자나 관리자가 브라우저에서 보는 화면인가? (랜딩, /admin, 사이트 자동화) | **nanomaster-web** |
+| 엔엠솔루션 회사 사이트인가? | **nmsolution** (광고는 nanomaster-ads의 `nmsolution` 브랜드) |
+| 계약·시공·정산·협력업체 관리인가? (유피스를 대체하는 것) | **manageapp** |
+| 입주자가 폰에서 쓰는 화면인가? | **jipdarie** (관리 기능은 manageapp API로) |
+| 회중 명단인가? | **mjcon** (다른 것과 절대 섞지 않는다) |
+| 목차·메모·하루짜리 실험인가? | **personal-task** |
 
-| 실험 | 시작 | 질문 | 결론 |
+**새 저장소는 만들지 않는다.** 꼭 필요하면 이 표부터 고친 뒤 만든다. 9월에 그렇게 안 해서 12개까지 늘었다.
+
+### 나노마스터 (회사)
+
+| 저장소 | 역할 | 배포 | 배포 브랜치 |
 |---|---|---|---|
-| *(아직 없음)* | | | |
+| [nanomaster-web](https://github.com/kdolbae/nanomaster-web) 🔒 | 회사 사이트 + 관리화면(/admin) + 사이트에서 도는 자동화(유피스 기사·단지 동기화, 단지 수집, 리뷰 수집) | Cloudflare Workers | `claude/gallant-meitner-zvk5ze` (기본 브랜치 `master`가 아님 — 주의) |
+| [nanomaster-ads](https://github.com/kdolbae/nanomaster-ads) 🔒 | 광고 실행 코드 전부. 네이버 검색광고·메타 광고 API, 누적 데이터(`data/`), 상황판 HTML 생성(`site/`), DO→메타 맞춤타겟 변환(`scripts/meta_audience/`) | 없음 (Actions 매일 06:35) | `main` |
+| [nmsolution](https://github.com/kdolbae/nmsolution) | 엔엠솔루션 회사 사이트 | Vercel | `main` |
 
-## 정리 대상 / 보관
+상황판 흐름: nanomaster-ads가 `site/index.html`을 만들어 커밋 → nanomaster-web `/admin/ads`가 GitHub API로 읽어 관리자에게만 보여줌. 중간 복사본은 없다.
 
-| 항목 | 왜 | 저장소 |
+### 집대리 (사업)
+
+| 저장소 | 역할 | 배포 | 브랜치 |
+|---|---|---|---|
+| [manageapp](https://github.com/kdolbae/manageapp) 🔒 | 집대리 관리 시스템 (Next.js + Supabase). 협력업체·계약·수납·정산·플랫폼. 유피스(UPIS) 분석 문서 `uffice/`도 여기 | 없음 | `main` (2026-09-26 앱 코드 합침) |
+| [jipdarie](https://github.com/kdolbae/jipdarie) 🔒 | 집대리 소비자 앱 (React + Vite + Capacitor). 입주 준비·하자·견적 | 없음 | `claude/friendly-mayer-3gwqw1` → `main`으로 바꿀 것 |
+
+### 개인
+
+| 저장소 | 역할 | 배포 |
 |---|---|---|
-| [nanomaster](archive/nanomaster.md) | 사실상 빈 저장소 (7KB). 이름만 선점된 상태 | [nanomaster](https://github.com/kdolbae/nanomaster) |
-| [jipdarie](archive/jipdarie.md) | 완전히 빈 저장소. 8월에 만들고 방치 | [jipdarie](https://github.com/kdolbae/jipdarie) 🔒 |
+| [mjcon](https://github.com/kdolbae/mjcon) 🔒 | 만정회중 전도인 관리 (Next.js + Supabase) | Vercel |
+| [personal-task](https://github.com/kdolbae/personal-task) 🔒 | 이 색인 | Vercel |
+
+### 보관 (더 이상 손대지 않음)
+
+| 저장소 | 왜 | 어디로 갔나 |
+|---|---|---|
+| nanomaster-ads-site | 상황판 복사본. 9/18 비공개, 9/26 게시 단계 제거 | nanomaster-ads `site/` |
+| advertising- | 메타 맞춤타겟 변환기 1개 | nanomaster-ads `scripts/meta_audience/` |
+| nanomaster | README 한 줄 + 카페24 백업 셸. 카페24는 이전 완료 | (필요 없음) |
+| manageapp_sb | 유피스 버튼 동기화. 9/9 이후 중단 | nanomaster-web 크론 + manageapp |
+| Gridworks | 빈 저장소 | — |
 
 ---
 
-## 지금 눈에 띄는 문제
+## 남은 정리 (사람이 GitHub에서 눌러야 하는 것)
 
-이 색인을 만들면서 발견한 것들. 고치면 지우면 된다.
-
-- [ ] **`manageapp_sb`의 기본 브랜치가 `codex/uffice-sync`다.** 피처 브랜치가 기본 브랜치로 설정돼 있다. 의도한 게 아니라면 `main`으로 되돌릴 것. 열린 이슈도 1개 있다.
-- [ ] **나노마스터 저장소가 4개로 쪼개져 있다** — `nanomaster`(빈 것), `nanomaster-web`, `nanomaster-ads`, `nanomaster-ads-site`. 도구/상황판 쌍은 한 저장소로 합칠 수 있는지 볼 것.
-- [ ] **기본 브랜치 이름이 제각각이다** — `nanomaster-web`만 `master`, 나머지는 `main`.
-- [ ] **`nanomaster-web`이 29MB다.** CSS가 주 언어인데 이 크기면 이미지·폰트가 저장소에 그대로 들어가 있을 가능성이 높다.
-- [ ] **빈 저장소 2개**(`nanomaster`, `jipdarie`)를 쓸지 지울지 결정할 것.
+- [ ] 비공개 전환: manageapp, personal-task, nanomaster (지금 public)
+- [ ] 보관 처리: nanomaster-ads-site, advertising-, nanomaster, manageapp_sb, Gridworks → Settings → Archive
+- [ ] nanomaster 저장소의 `claude/intelligent-clarke-600315` 브랜치 README에 카페24 비밀번호가 적혀 있다. 보관 전에 그 비밀번호를 바꿀 것
+- [ ] nanomaster-ads Secrets에서 `SITE_DEPLOY_KEY` 삭제 (더 이상 안 씀)
+- [ ] 기본 브랜치: jipdarie → `main`, personal-task → `main`
+- [ ] nanomaster-web 기본 브랜치를 `master`에서 gallant로 — 단, 바꾸는 순간 gallant에만 있는 `uffice-sync.yml` 크론(20분마다)이 돌기 시작한다. 그걸 원할 때 바꿀 것. 지금 master에서 도는 `리뷰 자동수집` 크론은 매일 실패 중
+- [ ] 머지된 브랜치 삭제: nanomaster-web 17개, nanomaster-ads 13개 (`gh pr list --state merged` 의 head 브랜치)
+- [ ] jipdarie의 `claude/upis-contract-management-info-ewsq1o` 브랜치 삭제 (manageapp으로 옮김)
+- [ ] manageapp_sb의 `claude/evangelist-management-program-0mma3o` 브랜치 삭제 (mjcon `docs/plan.md`가 상위본)
+- [ ] 열린 PR 정리: nanomaster-web 13개(체인), jipdarie 5개(체인), advertising- 2개(#2는 옮겼으니 닫기, #1은 nanomaster-web과 중복), nanomaster-ads #2(카페24, 불필요)
 
 ---
 
