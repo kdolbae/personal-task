@@ -28,7 +28,7 @@ DOBI = [
     ("기계작업", "크 레 인", "100TON", "대", 1, 2400000, "베이스 안착일 (1일), 일 240만 원", False),
     ("기계작업", "크 레 인", "60TON", "대", 1, 1700000, "베이스 안착일 (1일), 일 170만 원", False),
     ("기계작업", "밀착 장비", "유압잭·윈치·스키드", "SET", 1, 2000000, "밀착 이동 2일", False),
-    ("기계작업", "공구사용손료", "도비전문장비", "SET", 1, 2500000, "", False),
+    ("기계작업", "공구사용손료", "도비전문장비", "SET", 1, 3000000, "", False),
     ("기계작업", "일반관리비", "", "DAY", 3, 700000, "", False),
     ("기타비용", "소모품잡자재", "", "식", 1, 1000000, "", False),
 ]
@@ -55,6 +55,38 @@ BASE = [
     ("제작작업", "슬라이딩면 처리", "그리스·PTFE 시트", "식", 1, 500000, "밀착 이동용 레일 상면", False),
     ("기타비용", "일반관리비", "", "DAY", 3, 300000, "", False),
 ]
+U, SH, VQ, AS = "사용자 제시", "서해테크 도비 견적(10.10) 단가", "공급처 H빔 견적", "가정값 (확인 필요)"
+# (sheet, 규격 or 항목) -> (산출식, 근거)
+SRC = {
+    ("도비", "도비 전문기공"): ("7명 × 3일 × 300,000원", "인원 가정, 일수 " + U + ", 단가 " + SH),
+    ("도비", "안전관리자"): ("1명 × 3일 × 350,000원", AS),
+    ("도비", "100TON"): ("1대 × 1일 × 2,400,000원", U),
+    ("도비", "60TON"): ("1대 × 1일 × 1,700,000원", U),
+    ("도비", "유압잭·윈치·스키드"): ("1식 (밀착 이동 2일)", AS),
+    ("도비", "도비전문장비"): ("1식", SH),
+    ("도비", "일반관리비"): ("3일 × 700,000원", SH),
+    ("도비", "소모품잡자재"): ("1식", SH),
+    ("용접", "용접사"): ("3명 × 3일 × 350,000원", "인원·일수 " + U + ", 일당 " + AS),
+    ("용접", "고급기술자"): ("2명 × 3일 × 450,000원", "인원·일수 " + U + ", 일당 " + AS),
+    ("용접", "사상 기술자"): ("2명 × 2일 × 300,000원", "인원·일수 " + U + ", 일당 " + SH + " 전문기공 준용"),
+    ("용접", "조공"): ("2명 × 2일 × 200,000원", "인원·일수 " + U + ", 일당 " + AS),
+    ("용접", "안전관리자·화기감시"): ("1명 × 5일 × 300,000원", AS),
+    ("용접", "CO2 용접기"): ("3대 × 3일 × 400,000원", U),
+    ("용접", "그라인더·환기·조명"): ("1식", AS),
+    ("용접", "CO2 가스·와이어·디스크"): ("1식", AS),
+    ("용접", "PT/UT"): ("1식 (요구 시)", AS),
+    ("용접", "용접부"): ("1식", AS),
+    ("용접", "일반관리비"): ("5일 × 600,000원", AS + ", 서해테크 방식 준용"),
+    ("베이스", "H-250×250, 10m 4EA·5m 16EA·0.6m 30EA"): ("중고 1식 (신품 13,575,440원)", VQ + " (부가세 별도)"),
+    ("베이스", "H빔 운반"): ("1식", VQ),
+    ("베이스", "자재 하역·조립"): ("2일 × 300,000원", U),
+    ("베이스", "제작 기공"): ("4명 × 3일 × 300,000원", "인원·일수 " + U + ", 일당 " + SH + " 전문기공 준용"),
+    ("베이스", "용접기·절단기"): ("1식", AS),
+    ("베이스", "용접봉·가스·디스크"): ("1식", AS),
+    ("베이스", "그리스·PTFE 시트"): ("1식", AS),
+    ("베이스", "일반관리비"): ("3일 × 300,000원", AS),
+}
+ROWMAP = {}
 TARGETS = {"도비": 20_000_000, "용접": 25_000_000, "베이스": 18_000_000}
 
 wb = Workbook()
@@ -102,20 +134,21 @@ def detail(name, rows, work):
         ws.cell(r, 8, f"=F{r}*G{r}")
         ws.cell(r, 9, note)
         if is_labor: labor.append(r)
+        ROWMAP.setdefault(name, []).append((r, item, spec))
         r += 1
     # 고용·산재보험 (인건비 × 3.3%)
     ins = r
     ws.cell(r, 3, "고용&산재보험"); ws.cell(r, 5, "%"); ws.cell(r, 6, INS * 100)
     ws.cell(r, 8, "=(" + "+".join(f"H{x}" for x in labor) + f")*{INS}"); ws.cell(r, 9, "인건비 × 3.3%")
-    groups.setdefault("기타비용", []).append(r); r += 1
+    groups.setdefault("기타비용", []).append(r); ROWMAP[name].append((r, "고용&산재보험", "INS")); r += 1
     # 기업이윤 = 목표금액 맞춤
     base_sum = sum(x[4] * x[5] for x in rows)
     lab_sum = sum(x[4] * x[5] for x in rows if x[7])
     profit = TARGETS[name] - base_sum - round(lab_sum * INS)
     ws.cell(r, 3, "기업이윤"); ws.cell(r, 5, "식"); ws.cell(r, 6, 1).font = font(color="0000FF")
     ws.cell(r, 7, profit).font = font(color="0000FF"); ws.cell(r, 8, f"=F{r}*G{r}")
-    ws.cell(r, 9, "목표 금액 맞춤 조정 항목")
-    groups.setdefault("기타비용", []).append(r); r += 1
+    ws.cell(r, 9, "견적 금액 − 원가 (산출근거 시트)")
+    groups.setdefault("기타비용", []).append(r); ROWMAP[name].append((r, "기업이윤", "PROFIT")); r += 1
     last = r - 1
     ws.cell(r, 3, "소    계"); ws.cell(r, 8, f"=SUM(H{first}:H{last})")
     for c in (3, 8): ws.cell(r, c).font = font(True)
@@ -199,6 +232,45 @@ for t in FOOT + ["* 베이스 H빔은 중고품 기준입니다. 신품 적용 �
 cover.page_setup.paperSize = 9; cover.sheet_properties.pageSetUpPr.fitToPage = True; cover.page_setup.fitToHeight = 1
 cover.sheet_view.showGridLines = False
 cover.column_dimensions["G"].width = 15
+
+# ---- 산출근거
+gs = wb.create_sheet("산출근거", 1)
+gs["A1"] = "견적 산출근거"; gs["A1"].font = font(True, 15)
+gs["A2"] = "금액은 공종 시트에서 연동돼요(초록). 근거가 '가정값'인 항목은 단가를 받으면 바꿀 수 있어요."; gs["A2"].font = font(sz=10, color="555555")
+hd = ["공종", "항목", "규격·내용", "산출식", "금액(원)", "근거"]
+for c, h in enumerate(hd, 1):
+    x = gs.cell(4, c, h); x.font = font(True); x.fill = GRAY; x.border = BOX; x.alignment = CEN
+r = 5
+for name, rows_ in (("도비", DOBI), ("용접", WELD), ("베이스", BASE)):
+    first = r; cost_rows = []
+    for (dr, item, spec) in ROWMAP[name]:
+        if spec == "PROFIT": continue
+        if spec == "INS":
+            f_, src = "인건비 합계 × 3.3%", SH
+        else:
+            f_, src = SRC.get((name, spec or item), SRC.get((name, item), ("", "")))
+        gs.cell(r, 1, name); gs.cell(r, 2, item); gs.cell(r, 3, "" if spec == "INS" else spec); gs.cell(r, 4, f_)
+        x = gs.cell(r, 5, f"={name}!H{dr}"); x.font = font(color="008000"); x.number_format = WON
+        gs.cell(r, 6, src)
+        if "가정" in src: gs.cell(r, 6).fill = YEL
+        cost_rows.append(r); r += 1
+    gs.cell(r, 2, "원가 계").font = font(True); gs.cell(r, 5, f"=SUM(E{first}:E{r-1})").font = font(True); cost = r; r += 1
+    gs.cell(r, 2, "견적 금액").font = font(True); gs.cell(r, 5, TARGETS[name]).font = font(True, color="0000FF"); gs.cell(r, 6, U + " 공종 금액"); tgt = r; r += 1
+    gs.cell(r, 2, "기업이윤 (견적 − 원가)").font = font(True); gs.cell(r, 5, f"=E{tgt}-E{cost}").font = font(True)
+    gs.cell(r, 4, "이윤율"); gs.cell(r, 6, f"=E{r}/E{cost}"); gs.cell(r, 6).number_format = "0.0%"; r += 1
+    for rr in range(first, r):
+        for c in range(1, 7):
+            x = gs.cell(rr, c); x.border = BOX
+            if x.font.name != FN: x.font = font(x.font.b)
+            x.alignment = Alignment(horizontal="right" if c == 5 else "left", vertical="center", wrap_text=True)
+            if c == 5: x.number_format = WON
+        if rr >= cost:
+            for c in range(1, 7): gs.cell(rr, c).fill = GRAY
+    r += 1
+gs.cell(r, 1, "근거 구분: 사용자 제시 = 받은 단가·인원·일수 / 서해테크 = 도비 협력사 견적서(2026-10-10) 단가 / 공급처 = H빔 견적 / 가정값 = 제가 넣은 값").font = font(sz=10, color="555555")
+for col, w in zip("ABCDEF", [8, 18, 34, 26, 15, 46]): gs.column_dimensions[col].width = w
+gs.sheet_view.showGridLines = False
+gs.page_setup.paperSize = 9; gs.sheet_properties.pageSetUpPr.fitToPage = True; gs.page_setup.fitToHeight = 0
 
 # ---- 베이스 자재 (H빔 구매 견적)
 bs = wb.create_sheet("베이스자재")
