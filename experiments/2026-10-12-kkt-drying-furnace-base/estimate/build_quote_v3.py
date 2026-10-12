@@ -178,24 +178,23 @@ B_DOBI = [
     car(2, 3),
 ]
 B_WELD = list(WELD)   # 용접 범위·인원 같음 (회전 후 하부 용접 포함)
-B_JIG = [
-    ("재료비", "보강보 (회수조건)", "H-200×200×8×12, 약 40m", "kg", 1_996, 700, "40m × 49.9kg/m, 공사 후 회수", "M",
-     "40m × 49.9kg/m = 1,996kg × 700원 (A안 H빔 회수조건 단가 준용)", AS, None),
+B_JIG = [   # 사용자 제시(2026-10-12): 조방 개조안 약 800만원으로 베이스(약 1,800만원) 대체, 대신 200t급 크레인 1대 추가(B_도비)
+    ("재료비", "보강보 (회수조건)", "H-200×200×8×12, 약 25m", "kg", 1_248, 700, "25m × 49.9kg/m, 공사 후 회수", "M",
+     "25m × 49.9kg/m = 1,248kg × 700원 (A안 H빔 회수조건 단가 준용)", AS, None),
     ("재료비", "보강보 운임", "반입·반출", "회", 2, 160_000, "", "M", "2회 × 160,000원", VQ + " 운임 준용", None),
-    ("재료비", "용접 소모품", "용접봉·가스·디스크", "식", 1, 600_000, "", "M", "1식", AS, None),
-    ("재료비", "레벨 조정재", "라이너·심 플레이트", "식", 1, 300_000, "", "M", "1식", AS, None),
-    ("재료비", "배관 복구 자재", "가스켓·볼트·너트", "식", 1, 500_000, "제거한 배관 재조립용", "M", "1식", AS, None),
-    ("노무비", "제관사", "조방 보강보 취부", "인·일", 4, R_BOIL, "2명 × 2일", "L", "2명 × 2일 × 330,000원", AS, ("플랜트제관공", WAGE["플랜트제관공"])),
-    ("노무비", "용접사", "보강보 용접", "인·일", 2, R_WELD, "1명 × 2일", "L", "1명 × 2일 × 450,000원", AS, ("플랜트용접공", WAGE["플랜트용접공"])),
-    ("노무비", "조공", "보조", "인·일", 2, R_HELP, "1명 × 2일", "L", "1명 × 2일 × 200,000원", AS, ("보통인부", WAGE["보통인부"])),
-    ("노무비", "화재감시자", "화기작업 전담", "인·일", 2, R_FIRE, "1명 × 2일", "L", "1명 × 2일 × 250,000원", AS, ("특별인부", WAGE["특별인부"])),
+    ("재료비", "용접 소모품", "용접봉·가스·디스크", "식", 1, 420_000, "", "M", "1식", AS, None),
+    ("재료비", "레벨 조정재", "라이너·심 플레이트", "식", 1, 230_000, "", "M", "1식", AS, None),
+    ("재료비", "배관 복구 자재", "가스켓·볼트·너트", "식", 1, 380_000, "제거한 배관 재조립용", "M", "1식", AS, None),
+    ("노무비", "제관사", "조방 보강보 취부", "인·일", 2, R_BOIL, "2명 × 1일", "L", "2명 × 1일 × 330,000원", AS, ("플랜트제관공", WAGE["플랜트제관공"])),
+    ("노무비", "용접사", "보강보 용접", "인·일", 2, R_WELD, "2명 × 1일", "L", "2명 × 1일 × 450,000원", AS, ("플랜트용접공", WAGE["플랜트용접공"])),
+    ("노무비", "조공", "보조", "인·일", 2, R_HELP, "2명 × 1일", "L", "2명 × 1일 × 200,000원", AS, ("보통인부", WAGE["보통인부"])),
+    ("노무비", "화재감시자", "화기작업 전담", "인·일", 1, R_FIRE, "1명 × 1일", "L", "1명 × 1일 × 250,000원", AS, ("특별인부", WAGE["특별인부"])),
     ("노무비", "배관공", "바닥 접촉면 배관 제거·복구", "인·일", 4, R_PIPE, "2명 × 2일 (제거 1 + 복구 1)", "L",
      "2명 × 2일 × 350,000원", "사용자 제시 공정, 단가 " + AS, ("플랜트배관공", 320_480)),
-    ("장비", "지게차", "자재 하역·배관 반출", "일", 2, 300_000, "", "E", "2일 × 300,000원", U + " 단가 준용", None),
-    ("장비", "CO2 용접기 대여", "500A급", "대·일", 2, 400_000, "1대 × 2일", "E", "1대 × 2일 × 400,000원", U + " 단가 준용", None),
-    ("장비", "절단기", "산소·LPG 가스절단기", "식", 1, 300_000, "", "E", "1식", AS, None),
-    meal(4 + 2 + 2 + 2 + 4, "조방 개조 10 + 배관 4"),
-    car(1, 3),
+    ("장비", "CO2 용접기 대여", "500A급", "대·일", 2, 400_000, "2대 × 1일", "E", "2대 × 1일 × 400,000원", U + " 단가 준용", None),
+    ("장비", "절단기", "산소·LPG 가스절단기", "식", 1, 240_000, "", "E", "1식", AS, None),
+    meal(2 + 2 + 2 + 1 + 4, "조방 개조 7 + 배관 4"),
+    car(1, 2),
 ]
 WORKS_B = [("B_도비", B_DOBI, "B안: 조방 안착(100t·60t) + 전체 90° 회전(200t 주 + 100t 테일링), 안전펜스"),
            ("B_용접", B_WELD, "B안: 사상, 상부·측면 용접 → 회전 후 하부 용접"),
@@ -269,7 +268,7 @@ def page(ws, landscape=False):
 # ---------------------------------------------------------------- 요율근거 (먼저 만들어 셀 주소 확보)
 rs = wb.create_sheet("요율근거")
 rs["A1"] = "요율 및 단가 근거"; rs["A1"].font = font(True, 14)
-rs["A2"] = "파란 글씨는 입력값이에요. 바꾸면 모든 공종 시트와 견적서가 다시 계산돼요."; rs["A2"].font = font(sz=9, color="555555")
+rs["A2"] = "파란 글씨는 입력값임. 변경 시 모든 공종 시트와 견적서가 다시 계산됨."; rs["A2"].font = font(sz=9, color="555555")
 for c, h in enumerate(["항목", "적용 기준", "요율", "출처·비고"], 1):
     x = rs.cell(4, c, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.alignment = CEN
 RC = {}
@@ -310,7 +309,7 @@ for rr in range(h0 + 1, r):
         x = rs.cell(rr, c)
         if x.font.name != FN: x.font = font()
         x.alignment = RIGHT if c >= 3 else LEFT
-rs.cell(r, 1, "시중노임은 " + S_WAGE1 + " 기준. " + S_WAGE2 + ". 적용 단가는 숙련 기능공 현장 실거래 수준(사용자 지시)으로 시중노임보다 높게 잡았어요.").font = font(sz=9, color="555555")
+rs.cell(r, 1, "시중노임은 " + S_WAGE1 + " 기준. " + S_WAGE2 + ". 적용 단가는 숙련 기능공 현장 실거래 수준(사용자 지시)으로 시중노임보다 높게 적용함.").font = font(sz=9, color="555555")
 rs.merge_cells(start_row=r, start_column=1, end_row=r, end_column=5); rs.cell(r, 1).alignment = LEFT; rs.row_dimensions[r].height = 30
 r += 2
 rs.cell(r, 1, "출처").font = font(True, 12); r += 1
@@ -318,7 +317,7 @@ for nm, url in URLS:
     rs.cell(r, 1, nm).font = font(); x = rs.cell(r, 2, url); x.font = font(sz=9, color="0563C1")
     if url.startswith("http"): x.hyperlink = url
     rs.merge_cells(start_row=r, start_column=2, end_row=r, end_column=5); r += 1
-rs.cell(r + 1, 1, "조사일 2026-10-12. 요율은 해마다 바뀌므로 계약 시점 고시로 다시 확인하세요.").font = font(sz=9, color="555555")
+rs.cell(r + 1, 1, "조사일 2026-10-12. 요율은 해마다 바뀌므로 계약 시점 고시로 재확인 필요함.").font = font(sz=9, color="555555")
 setw(rs, {"A": 22, "B": 26, "C": 14, "D": 60, "E": 10})
 page(rs, landscape=True)
 
@@ -397,8 +396,8 @@ def detail(name, rows, work):
         ws.cell(tot, c).fill = YEL
     ws.cell(tot, 1).font = font(True, 11); ws.cell(tot, 7).font = font(True, 11)
     fr = tot + 2
-    for t in ["※ 파란 글씨는 수량·단가 입력값이며, 근거는 '산출근거'·'요율근거' 시트에 있습니다.",
-              "※ 1일 8시간 기준입니다. 연장·야간 작업 시 별도 협의합니다."]:
+    for t in ["※ 파란 글씨는 수량·단가 입력값이며, 근거는 '산출근거'·'요율근거' 시트에 정리함.",
+              "※ 1일 8시간 기준임. 연장·야간 작업 시 별도 협의함."]:
         ws.merge_cells(start_row=fr, start_column=1, end_row=fr, end_column=9)
         ws.cell(fr, 1, t).font = font(sz=9, color="555555"); fr += 1
     setw(ws, {"A": 9, "B": 20, "C": 30, "D": 7, "E": 8, "F": 11, "G": 13, "H": 38, "I": 7})
@@ -460,7 +459,7 @@ c.merge_cells("A3:I3"); c["A3"] = "QUOTATION"; c["A3"].font = font(sz=10, color=
 info_l = [("견적번호", QNO), ("견 적 일", QDATE), ("수    신", "금강변압기 유한회사 (KUMKANG TRANSFORMER) 귀중"),
           ("참    조", ""), ("공 사 명", WORKNAME),
           ("공사 장소", "경기 화성시 마도면 마도공단로1길 214 사내 마당"),
-          ("공사 기간", "총 11일 (착공일은 협의, 공정표 시트 참조)"),
+          ("공사 기간", "2026.10.21 ~ 2026.11.02 (가계획, 작업일 11일, 공정표 시트 참조)"),
           ("결제 조건", "협의 (예: 착수 30%, 준공 후 70%)"),
           ("유효 기간", "견적일로부터 30일")]
 r = 5
@@ -483,7 +482,7 @@ c.merge_cells("G10:I13"); c["G10"] = "(직인)"; c["G10"].font = font(sz=9, colo
 border_range(c, 10, 13, 7, 9)
 r = 15
 c.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9)
-c.cell(r, 1, "아래와 같이 견적합니다.").font = font(sz=10); r += 1
+c.cell(r, 1, "아래와 같이 견적함.").font = font(sz=10); r += 1
 c.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2); c.cell(r, 1, "합계 금액\n(부가세 포함)").font = font(True)
 c.cell(r, 1).alignment = CEN; c.cell(r, 1).fill = GRAY
 c.merge_cells(start_row=r, start_column=3, end_row=r, end_column=6)
@@ -527,25 +526,25 @@ for rr in range(i0, r):
 r += 1
 c.cell(r, 1, "특기사항").font = font(True, 11); r += 1
 NOTES = [
-    "1. 전기 수전, 배관·닥트 해체·복구, 보온, 도장, 시운전은 포함하지 않습니다.",
-    "2. 크레인 사양·배치는 인양계획서와 지반 검토 후 확정하며, 변경 시 정산합니다.",
-    "3. 베이스 H빔은 중고품 회수조건입니다. 발주처가 베이스를 소유하는 경우 2,584,083원(중고 구매가 기준)이 추가됩니다.",
-    "4. 비파괴검사(PT/UT)는 포함하지 않으며, 발주처 요구 시 별도 정산합니다.",
-    "5. 1일 8시간 기준이며, 연장·야간·휴일 작업과 발주처 사유 대기는 별도 협의합니다.",
-    "6. 작업구역(약 10×15m)은 이동식 안전펜스로 통제하며, 발주처 안전관리 규정과 출입 절차를 따릅니다.",
-    "7. 대안(B안: 기존 조방 개조 + 전체 90° 회전)의 금액은 AB비교 시트에 있습니다.",
+    "1. 전기 수전, 배관·닥트 해체·복구, 보온, 도장, 시운전은 포함하지 않음.",
+    "2. 크레인 사양·배치는 인양계획서와 지반 검토 후 확정하며, 변경 시 정산함.",
+    "3. 베이스 H빔은 중고품 회수조건임. 발주처가 베이스를 소유하는 경우 2,584,083원(중고 구매가 기준)이 추가됨.",
+    "4. 비파괴검사(PT/UT)는 포함하지 않으며, 발주처 요구 시 별도 정산함.",
+    "5. 1일 8시간 기준이며, 연장·야간·휴일 작업과 발주처 사유 대기는 별도 협의함.",
+    "6. 작업구역(약 10×15m)은 이동식 안전펜스로 통제하며, 발주처 안전관리 규정과 출입 절차를 따름.",
+    "7. 대안(B안: 기존 조방 개조 + 전체 90° 회전)의 금액은 AB비교 시트에 정리함.",
 ]
 for t in NOTES:
     c.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9)
     c.cell(r, 1, t).font = font(sz=9); c.cell(r, 1).alignment = LEFT; c.row_dimensions[r].height = 18; r += 1
-c.cell(r + 1, 1, "노란 칸은 공급자 정보·협의 항목으로 채워야 하는 칸입니다.").font = font(sz=8, color="999999")
+c.cell(r + 1, 1, "노란 칸은 공급자 정보·협의 항목으로 채워야 하는 칸임.").font = font(sz=8, color="999999")
 setw(c, {"A": 11, "B": 9, "C": 9, "D": 12, "E": 12, "F": 8, "G": 8, "H": 15, "I": 26})
 page(c)
 
 # ---------------------------------------------------------------- 산출근거
 gs = wb.create_sheet("산출근거", 2)
 gs["A1"] = "견적 산출근거"; gs["A1"].font = font(True, 14)
-gs["A2"] = "금액은 공종 시트에서 연동돼요(초록). 노란 칸은 업체 견적으로 확인할 가정값이에요."; gs["A2"].font = font(sz=9, color="555555")
+gs["A2"] = "금액은 공종 시트에서 연동됨(초록). 노란 칸은 업체 견적으로 확인할 가정값임."; gs["A2"].font = font(sz=9, color="555555")
 for cc, h in enumerate(["공종", "품명", "규격", "산출식", "금액(원)", "근거", "시중노임 참고"], 1):
     x = gs.cell(4, cc, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.border = BOX; x.alignment = CEN
 r = 5
@@ -605,20 +604,26 @@ for i, (k, v, note) in enumerate(vals):
     if isinstance(v, int): x.font = font(color="0000FF")
     bs.cell(rr, 3, f"=B{rr}/$E$7"); bs.cell(rr, 3).number_format = '#,##0'; bs.cell(rr, 4, note)
 border_range(bs, 9, 14, 1, 4)
-bs.cell(16, 1, "단위중량 72.4 kg/m는 KS H-250×250×9×14 공칭값이에요. 베이스는 임시 구조물이라 방청·도장은 하지 않아요.").font = font(sz=9, color="555555")
+bs.cell(16, 1, "단위중량 72.4 kg/m는 KS H-250×250×9×14 공칭값임. 베이스는 임시 구조물로 방청·도장 미적용.").font = font(sz=9, color="555555")
 setw(bs, {"A": 18, "B": 16, "C": 14, "D": 34, "E": 14})
 page(bs)
 
 # ---------------------------------------------------------------- 공정표
 ps = wb.create_sheet("공정표")
-ps["A1"] = "공정표 (총 11일)"; ps["A1"].font = font(True, 14)
+import datetime as _dt
+WDAYS = []
+_d = _dt.date(2026, 10, 21)
+while len(WDAYS) < 11:
+    if _d.weekday() != 6: WDAYS.append(f"{_d.month}/{_d.day}\n" + "월화수목금토일"[_d.weekday()])
+    _d += _dt.timedelta(days=1)
+ps["A1"] = "공정표 (가계획 2026.10.21 ~ 11.02, 작업일 11일)"; ps["A1"].font = font(True, 14)
 steps = [("안전펜스 설치·작업구역 통제", "조공 2명", 1, 1), ("베이스 제작·설치", "제관 2, 용접 1, 조공 1, 화재감시 1", 1, 3),
          ("회전·베이스 안착 (100t + 60t)", "도비 7명, 신호수 2, 안전담당", 4, 4),
          ("접합면 사상", "사상 2, 조공 2, 화재감시 1", 5, 6), ("용접면 밀착 이동", "도비 7명, 안전담당", 7, 8),
          ("접합부 용접", "용접사 3, 고급기술자 2, 화재감시 1", 9, 11), ("펜스 해체·정리", "조공 2명", 11, 11)]
 ps.cell(3, 1, "공정").font = font(True); ps.cell(3, 2, "투입 인원").font = font(True)
 for d in range(1, 12):
-    x = ps.cell(3, 2 + d, f"D{d}"); x.font = font(True); x.alignment = CEN
+    x = ps.cell(3, 2 + d, WDAYS[d - 1]); x.font = font(True, sz=9); x.alignment = CEN
     ps.column_dimensions[x.column_letter].width = 5.5
 BAR = PatternFill("solid", fgColor="E8742A")
 for i, (nm, crew, a, b) in enumerate(steps):
@@ -627,9 +632,10 @@ for i, (nm, crew, a, b) in enumerate(steps):
     for d in range(1, 12):
         if a <= d <= b: ps.cell(rr, 2 + d).fill = BAR
 border_range(ps, 3, 3 + len(steps), 1, 13)
-for cc in range(1, 14): ps.cell(3, cc).fill = GRAY
+for cc in range(1, 14): ps.cell(3, cc).fill = GRAY; ps.cell(3, cc).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+ps.row_dimensions[3].height = 30
 setw(ps, {"A": 30, "B": 32})
-ps.cell(5 + len(steps), 1, "사용자 제시 공정 기준. 베이스를 공장에서 먼저 제작하면 현장 공기를 줄일 수 있어요.").font = font(sz=9, color="555555")
+ps.cell(5 + len(steps), 1, "가계획: 2026-10-21(수) 착공 ~ 11-02(월) 완료, 일요일 휴무 기준 작업일 11일. 착공일은 발주처 협의로 확정함.").font = font(sz=9, color="555555")
 page(ps, landscape=True)
 
 
@@ -638,9 +644,9 @@ xs = wb.create_sheet("AB비교", 2)
 xs.merge_cells("A1:E1"); xs["A1"] = "A안 · B안 금액 비교 (공급가액, 부가세 별도)"; xs["A1"].font = font(True, 14)
 for cc, h in enumerate(["구분", "A안 (임시 베이스 + 밀착 이동)", "B안 (조방 개조 + 90° 회전)", "차액 (B − A)", "비고"], 1):
     x = xs.cell(3, cc, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.alignment = CEN
-pairs = [("도비", "도비", "B_도비", "B안: 200t 크레인 + 100t 테일링 회전일 추가, 밀착 이동 장비 없음"),
+pairs = [("도비", "도비", "B_도비", "B안: 200t급 크레인 1대 추가(전체 90° 회전) + 100t 테일링"),
          ("용접", "용접", "B_용접", "같은 인원·장비로 상부·측면 용접 후 회전해서 하부 용접"),
-         ("베이스 / 조방", "베이스", "B_조방", "B안: 신규 베이스 대신 조방 보강, 배관 제거·복구 추가")]
+         ("베이스 / 조방", "베이스", "B_조방", "B안: 신규 베이스(약 1,800만) 대신 조방 개조(약 800만), 배관 제거·복구 포함")]
 r = 4
 for lab, a, b, note in pairs:
     xs.cell(r, 1, lab)
@@ -660,9 +666,9 @@ for rr in range(4, r + 1):
     xs.row_dimensions[rr].height = 30
 for cc in range(1, 6): xs.cell(r, cc).fill = YEL
 r += 2
-for t in ["※ B안 200t 크레인 단가는 업체 견적이 없어 사용자 제시 100t·60t 일대에서 톤급 비례로 외삽한 추정값이에요. 회송·웨이트 운반은 별도 줄로 넣었어요.",
-          "※ B안 회전은 일체 약 83t(35t + 48t)을 모서리 기준으로 세우는 작업이라, 실제 크레인 사양은 인양계획서와 구조검토로 정해야 해요.",
-          "※ 회전 후 원래 자세로 되돌리는 회전이나 영구 받침이 필요하면 별도예요."]:
+for t in ["※ B안 200t 크레인 단가는 업체 견적이 없어 사용자 제시 100t·60t 일대에서 톤급 비례로 외삽한 추정값임. 회송·웨이트 운반은 별도 줄로 넣음.",
+          "※ B안 회전은 일체 약 83t(45t + 38t)을 모서리 기준으로 세우는 작업으로, 실제 크레인 사양은 인양계획서·구조검토로 확정 필요함.",
+          "※ 회전 후 원래 자세로 되돌리는 회전이나 영구 받침이 필요하면 별도임."]:
     xs.merge_cells(start_row=r, start_column=1, end_row=r, end_column=5)
     xs.cell(r, 1, t).font = font(sz=9, color="555555"); xs.cell(r, 1).alignment = LEFT; xs.row_dimensions[r].height = 28; r += 1
 setw(xs, {"A": 16, "B": 22, "C": 22, "D": 16, "E": 52})
