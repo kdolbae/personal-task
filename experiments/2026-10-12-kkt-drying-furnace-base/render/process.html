@@ -12,12 +12,18 @@ html,body{margin:0;background:#000;overflow:hidden;font-family:"WenQuanYi Zen He
 #days div.done{background:rgba(232,116,42,.35);color:#fff}
 #note{position:absolute;left:36px;bottom:22px;color:#fff;font-size:17px;background:rgba(0,0,0,.45);padding:5px 12px}
 .tag{position:absolute;color:#fff;font-size:22px;font-weight:bold;background:rgba(15,20,28,.72);padding:3px 10px;transform:translate(-50%,-100%);white-space:nowrap}
+#card{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding-left:9%;background:linear-gradient(90deg,rgba(12,18,28,.94) 0%,rgba(12,18,28,.82) 55%,rgba(12,18,28,.35) 100%);color:#fff;opacity:0}
+#card .k1{font-size:30px;color:#e8742a;font-weight:bold;letter-spacing:1px}
+#card .k2{font-size:64px;font-weight:bold;margin:18px 0 14px;line-height:1.2}
+#card .k3{font-size:28px;color:#cfd6de;line-height:1.6;white-space:pre-line}
+#card .k4{font-size:22px;color:#8d98a5;margin-top:36px}
 </style>
 <script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
 </head><body>
 <div id="cap"><div class="plan"></div><div class="title"></div><div class="crew"></div></div>
 <div id="days"></div>
 <div id="note">개념 시각화 · 크레인 위치·줄걸이·하중배분·작업반경 미검토 · 실제 인양계획 아님</div>
+<div id="card"><div class="k1">금강변압기 유한회사 · 진공건조로 설치 공사</div><div class="k2"></div><div class="k3"></div><div class="k4">엔엠솔루션 · 2026-10</div></div>
 <div id="tagL" class="tag"></div><div id="tagR" class="tag"></div>
 <script type="module">
 import * as THREE from 'three';
@@ -146,20 +152,18 @@ box(gx0 + 300, gx1 - 300, -1500, 1500, 7400, 8600, M(0x3c78c8, 0.6, 0.2));   // 
 const baseA = { bot: new THREE.Group(), col: new THREE.Group(), top: new THREE.Group() };
 scene.add(baseA.bot, baseA.col, baseA.top);
 {
-  const L = 10000, RAIL_Y = [300, 1400, 3600, 4700], STA = [150, 2400, 4625, 5375, 7600, 9850], LANE = [4700, 5300];
+  // H-250×250×9×14 (공급처 견적): 10m 4EA = 상부 레일, 5m 16EA = 하부 레일 8 + 가로대 8, 0.6m 30EA = 기둥. 높이 250+600+250 = 1,100
+  const L = 10000, RAIL_Y = [300, 1700, 3300, 4700], H = 250;
   for (const yc of RAIL_Y) {
-    ibeamX(0, L, yc, 550, 800, 125, 9, 6, matPrimer, baseA.top);
-    ibeamX(0, LANE[0], yc, 0, 200, 100, 8, 5.5, matPrimer, baseA.bot);
-    ibeamX(LANE[1], L, yc, 0, 200, 100, 8, 5.5, matPrimer, baseA.bot);
-    box(10000, 10350, yc - 100, yc + 100, 550, 800, matPrimer, baseA.top);            // push bracket (rail end)
+    ibeamX(0, L, yc, 850, 1100, H, 14, 9, matPrimer, baseA.top);
+    ibeamX(0, 4990, yc, 0, 250, H, 14, 9, matPrimer, baseA.bot);
+    ibeamX(5010, L, yc, 0, 250, H, 14, 9, matPrimer, baseA.bot);
+    box(10000, 10350, yc - 120, yc + 120, 850, 1100, matPrimer, baseA.top);            // push bracket (rail end)
   }
-  for (const xc of STA) {
-    for (let k = 0; k < 3; k++) {
-      ibeamY(xc, RAIL_Y[k] + 62.5, RAIL_Y[k + 1] - 62.5, 650, 800, 75, 7, 5, matPrimer, baseA.top);
-      ibeamY(xc, RAIL_Y[k] + 50, RAIL_Y[k + 1] - 50, 0, 150, 75, 7, 5, matPrimer, baseA.bot);
-    }
-    for (const yc of RAIL_Y) box(xc - 62.5, xc + 62.5, yc - 62.5, yc + 62.5, 200, 550, matColumn, baseA.col);
-  }
+  for (const xc of [150, 1650, 3300, 4400, 5600, 6700, 8350, 9850]) ibeamY(xc, 0, 5000, 0, 250, H, 14, 9, matPrimer, baseA.bot);
+  // 기둥 30: 바깥 레일 8개소 × 2 + 안쪽 레일 7개소 × 2. 접합선(x=5,000) 좌우 W1,100은 하부 용접 통로로 비움
+  const POSTX = [150, 1650, 3300, 4400, 5600, 6700, 8350, 9850];
+  RAIL_Y.forEach((yc, k) => POSTX.forEach((xc, j) => { if ((k === 1 || k === 2) && j === 7) return; box(xc - 125, xc + 125, yc - 125, yc + 125, 250, 850, matColumn, baseA.col); }));
 }
 // ---------------- plan B: existing jig 7m x 3m + modification ----------------
 const jig = { old: new THREE.Group(), add: new THREE.Group() };
@@ -213,16 +217,34 @@ const pR = piece(1, false);   // far side: 48t
 const assembly = new THREE.Group(); scene.add(assembly);   // used in plan B for the 90° turn
 
 // ---------------- workers ----------------
-const matSuit = M(0x27406b, 0.8, 0.05), matSkin = M(0xc99b7a, 0.8, 0), matHelmet = M(0xf2c200, 0.4, 0.1);
-function worker() {
+const matSuit = M(0x2d3b52, 0.85, 0.02), matPants = M(0x2b2f36, 0.9, 0.02), matSkin = M(0xc99b7a, 0.8, 0), matHelmet = M(0xf2f2ee, 0.35, 0.1);
+const matVest = M(0xff7a1a, 0.7, 0.02), matRefl = new THREE.MeshStandardMaterial({ color: 0xdfe3e6, roughness: 0.25, metalness: 0.6, emissive: 0x3a3a3a });
+const matBoot = M(0x2a1d14, 0.8, 0.05), matGlove = M(0xd8cfa8, 0.9, 0.0);
+function limb(r, len, mat, parent, x, y, z, rx = 0, rz = 0) {   // pivot at the top joint
+  const piv = new THREE.Group(); piv.position.set(x, y, z); piv.rotation.set(rx, 0, rz); parent.add(piv);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 10), mat); m.position.y = -len / 2 - r * 0.6; piv.add(m); return piv;
+}
+function worker(i = 0) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.9, 4, 10), matSuit); body.position.y = 0.75; g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), matSkin); head.position.y = 1.55; g.add(head);
-  const hel = new THREE.Mesh(new THREE.SphereGeometry(0.155, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), matHelmet); hel.position.y = 1.58; g.add(hel);
+  for (const sx of [-0.1, 0.1]) {
+    const leg = limb(0.075, 0.68, matPants, g, sx, 0.88, 0, sx < 0 ? 0.06 : -0.06);
+    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.11, 0.27), matBoot); boot.position.set(0, -0.83, 0.05); leg.add(boot);
+  }
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.42, 4, 12), matSuit); torso.scale.set(1.15, 1, 0.75); torso.position.y = 1.15; g.add(torso);
+  const vest = new THREE.Mesh(new THREE.CapsuleGeometry(0.178, 0.36, 4, 12), matVest); vest.scale.set(1.17, 1, 0.8); vest.position.y = 1.18; g.add(vest);
+  for (const y of [1.02, 1.2]) { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.212, 0.212, 0.035, 16), matRefl); st.scale.set(1, 1, 0.68); st.position.y = y; g.add(st); }
+  for (const sx of [-0.25, 0.25]) {
+    const arm = limb(0.058, 0.5, matSuit, g, sx, 1.42, 0, -0.35 - (i % 3) * 0.25, sx < 0 ? 0.12 : -0.12);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), matGlove); hand.position.y = -0.66; arm.add(hand);
+  }
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.08, 10), matSkin); neck.position.y = 1.5; g.add(neck);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.115, 18, 14), matSkin); head.scale.set(1, 1.12, 1.05); head.position.y = 1.63; g.add(head);
+  const hel = new THREE.Mesh(new THREE.SphereGeometry(0.14, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), i % 4 === 3 ? M(0xf2c200, 0.35, 0.1) : matHelmet); hel.position.y = 1.67; g.add(hel);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.02, 20, 1, false, -0.9, 1.8), hel.material); brim.position.set(0, 1.675, 0.02); brim.rotation.y = Math.PI; g.add(brim);
   g.traverse(o => { if (o.isMesh) o.castShadow = true; });
   scene.add(g); g.visible = false; return g;
 }
-const crew = Array.from({ length: 8 }, worker);
+const crew = Array.from({ length: 8 }, (_, i) => worker(i));
 function placeCrew(list) { crew.forEach((w, i) => { const p = list[i]; w.visible = !!p; if (p) { w.position.set(p[0], p[1] || 0, p[2]); w.rotation.set(p[4] || 0, p[3] || 0, 0); } }); }
 
 // ---------------- mobile cranes ----------------
@@ -338,7 +360,7 @@ function frameA(t) {
   // 0-4 site | 4-12 base fab D1-3 | 12-24 lift & set D4 | 24-30 grind D5-6 | 30-37 push D7-8 | 37-46 weld D9-11 | 46-50 done
   TOTAL = 50;
   const yawStart = Math.PI / 2;  // pieces sit turned 90° in the yard; they are turned in the air while lifted
-  const LAND_L = V(5.0, 0.8, 2.5), LAND_R = V(5.6, 0.8, 2.5), FINAL_R = V(5.0, 0.8, 2.5);
+  const LAND_L = V(5.0, 1.1, 2.5), LAND_R = V(5.6, 1.1, 2.5), FINAL_R = V(5.0, 1.1, 2.5);
   baseA.bot.visible = t > 4.2; baseA.col.visible = t > 6.6; baseA.top.visible = t > 8.8;
   baseA.bot.position.y = -0.25 * (1 - seg(t, 4.2, 5.4)); baseA.col.position.y = 0.5 * (1 - seg(t, 6.6, 7.6)); baseA.top.position.y = 1.2 * (1 - seg(t, 8.8, 10.4));
   for (const o of [jig.old, jig.add, crib]) o.visible = false;
@@ -350,7 +372,7 @@ function frameA(t) {
   else if (t < 18) { liftPose(pL, t, 12, 18, START_L, LAND_L, yawStart, 0, 7.2); setPiece(pR, START_R, yawStart); }
   else if (t < 24) { setPiece(pL, LAND_L, 0); liftPose(pR, t, 18, 24, START_R, LAND_R, yawStart, 0, 7.2); }
   else if (t < 30) { setPiece(pL, LAND_L, 0); setPiece(pR, LAND_R, 0); }
-  else if (t < 37) { setPiece(pL, LAND_L, 0); setPiece(pR, V(lerp(5.6, 5.0, seg(t, 31, 36)), 0.8, 2.5), 0); }
+  else if (t < 37) { setPiece(pL, LAND_L, 0); setPiece(pR, V(lerp(5.6, 5.0, seg(t, 31, 36)), 1.1, 2.5), 0); }
   else { setPiece(pL, LAND_L, 0); setPiece(pR, FINAL_R, 0); }
   if (cranesOn) {
     const active = t < 18 ? pL : pR;
@@ -361,31 +383,31 @@ function frameA(t) {
   // workers
   if (t < 4) placeCrew([]);
   else if (t < 12) placeCrew([[1.5, 0, 6.0, 0.4], [4.0, 0, 6.1, -0.2], [7.0, 0, 6.2, 0.6], [9.5, 0, 5.8, -0.5]]);
-  else if (t < 24) placeCrew([[0.5, 0, 7.4, 0.7], [11.5, 0, 7.6, -0.6], [3.2, 0, 8.2, 0.2], [8.0, 0, 8.0, -0.1], [6.2, 0, 9.4, 0.0], [-0.8, 0, 3.0, 1.2], [12.2, 0, 2.2, -1.2], [5.0, 0, 13.6, 3.1]]);
-  else if (t < 30) placeCrew([[5.3, 0.8, 5.2, -1.4], [5.3, 0.8, -0.2, -1.6], [5.3, 4.8, 3.6, -1.5], [5.25, 0, 2.5, 1.57, 0]]);
+  else if (t < 24) placeCrew([[0.5, 0, 7.4, 0.7], [11.5, 0, 7.6, -0.6], [3.2, 0, 8.2, 0.2], [8.0, 0, 8.0, -0.1], [6.2, 0, 9.4, 0.0], [-1.1, 0, 3.0, 1.2], [12.2, 0, 2.2, -1.2], [5.0, 0, 13.6, 3.1]]);
+  else if (t < 30) placeCrew([[5.3, 1.1, 5.2, -1.4], [5.3, 1.1, -0.2, -1.6], [5.3, 5.1, 3.6, -1.5], [5.25, 0, 2.5, 1.57, 0]]);
   else if (t < 37) placeCrew([[10.9, 0, 1.0, 1.5], [10.9, 0, 4.0, 1.5], [9.0, 0, 6.4, 0.2], [2.0, 0, 6.4, -0.2], [5.0, 0, 7.2, 3.1], [0.5, 0, 6.0, 0.4], [7.0, 0, 7.4, 0.1]]);
-  else if (t < 46) placeCrew([[5.0, 0.8, 5.25, 3.14], [5.0, 4.8, 1.0, 0], [5.0, 4.8, 3.9, 0], [5.0, 0.06, 1.3, 1.57, -1.3], [5.0, 0.06, 3.7, 1.57, -1.3]]);
+  else if (t < 46) placeCrew([[5.0, 1.1, 5.25, 3.14], [5.0, 5.1, 1.0, 0], [5.0, 5.1, 3.9, 0], [5.0, 0.06, 1.3, 1.57, -1.3], [5.0, 0.06, 3.7, 1.57, -1.3]]);
   else placeCrew([[3.0, 0, 6.8, 0.2], [6.5, 0, 6.9, -0.2]]);
-  if (t >= 24 && t < 30) spray([V(5.3, 1.6, 4.9), V(5.3, 1.3, 0.1), V(5.4, 4.85, 3.4)], t);
+  if (t >= 24 && t < 30) spray([V(5.3, 1.6, 4.9), V(5.3, 1.3, 0.1), V(5.4, 5.15, 3.4)], t);
   if (t >= 30 && t < 37) { // jacks at the far end
-    spray([V(10.2, 0.85, 1.4)], t, 0.0001); sparks.visible = false;
+    spray([V(10.2, 1.15, 1.4)], t, 0.0001); sparks.visible = false;
   }
   if (t >= 37 && t < 46) {
     const k = seg(t, 37.5, 45.5);
-    const pts = [V(5.0, 0.85 + k * 3.9, 4.95), V(5.0, 4.85, 0.1 + k * 2.4), V(5.0, 0.82, 0.3 + k * 4.4)];
+    const pts = [V(5.0, 1.15 + k * 3.9, 4.95), V(5.0, 5.15, 0.1 + k * 2.4), V(5.0, 1.12, 0.3 + k * 4.4)];
     pts.forEach((p, i) => { glows[i].m.visible = true; glows[i].m.position.copy(p); glows[i].l.intensity = 6 + 4 * Math.sin(t * 40 + i); });
     spray(pts, t, 0.35);
-    bead.visible = true; bead.scale.set(0.05, 0.05 + k * 3.9, 0.05); bead.position.set(5.0, 0.85 + k * 1.95, 4.97);
+    bead.visible = true; bead.scale.set(0.05, 0.05 + k * 3.9, 0.05); bead.position.set(5.0, 1.15 + k * 1.95, 4.97);
   }
   if (t >= 46) { bead.visible = true; bead.scale.set(0.05, 3.95, 0.05); bead.position.set(5.0, 2.8, 4.97); }
   // captions
   const P = '금강변압기 유한회사 마당 · A안 신규 사다리형 베이스 (총 11일)';
   if (t < 4) setCap(P, '현장 현황', '개구부 쪽 35t(크레인 가까운 쪽) · 반대쪽 48t', 0, 11);
-  else if (t < 12) setCap(P, '베이스 제작·설치', '제작 기공 4명 · 하부 사다리 → 기둥 → 상부 사다리 (10×5m, H800)', 1 + Math.min(2, Math.floor((t - 4) / 2.67)), 11);
-  else if (t < 24) setCap(P, '회전·베이스 안착', '100t + 60t 탠덤 인양 · 도비 7명 · 안전관리자 · 간격 600 두고 안착', 4, 11);
+  else if (t < 12) setCap(P, '베이스 제작·설치', '제관 2 · 용접 1 · 조공 1 · 화재감시 1 · H-250×250 하부 사다리 → 기둥 → 상부 레일 (10×5m, H1,100)', 1 + Math.min(2, Math.floor((t - 4) / 2.67)), 11);
+  else if (t < 24) setCap(P, '회전·베이스 안착', '100t + 60t 탠덤 인양 · 도비 7명 · 신호수 2 · 안전담당 · 간격 600 두고 안착', 4, 11);
   else if (t < 30) setCap(P, '접합면 사상', '사상 기술자 2명 · 조공 2명', t < 27 ? 5 : 6, 11);
   else if (t < 37) setCap(P, '용접면 밀착 이동', '유압잭으로 48t 쪽을 600 밀착 · 레일 상면 그리스/PTFE · 도비 7명', t < 33.5 ? 7 : 8, 11);
-  else if (t < 46) setCap(P, '접합부 용접 (상부·측면·하부 통로)', '용접사 3명 · 고급기술자 2명 · 화기감시', t < 40 ? 9 : t < 43 ? 10 : 11, 11);
+  else if (t < 46) setCap(P, '접합부 용접 (상부·측면·하부 통로)', '용접사 3명 · 고급기술자(제관) 2명 · 화재감시자 1명', t < 40 ? 9 : t < 43 ? 10 : 11, 11);
   else setCap(P, '완료', '하부는 베이스 통로(순높이 550)에서 용접 · 회전 없이 마무리', 99, 11);
   camKey([
     [0, [-4, 52, 40], [0, 0, 0], 42], [4, [13, 6, 15], [3, 0.5, 2.5], 40],
@@ -475,7 +497,26 @@ function frameB(t) {
   if (t >= 32) { tag(tagL, assembly, t < 48 ? '약 83t 일체' : '', 5.2); tag(tagR, assembly, '', 0); }
 }
 scene.traverse(o => { if (o.isMesh && o.material && o.material.envMapIntensity !== undefined) o.material.envMapIntensity = 0.45; });
-window.renderAt = (t) => { (PLAN === 'B' ? frameB : frameA)(t); renderer.render(scene, camera); return TOTAL; };
+const cardEl = document.getElementById('card');
+const CARD = PLAN === 'B'
+  ? { title: 'B안 · 기존 조방 개조 + 90° 회전 용접', sub: '조방 7×3m 개조 → 안착·상부/측면 용접 → 바닥면 배관 제거\n200t급 크레인 1회 90° 회전 → 하부 용접 · 약 11일',
+      end: 'B안 요약', endSub: '조방 재사용으로 베이스 자재 절감\n대형 크레인 1회 추가 · 회전 중 일체 약 83t 인양\n회전 인양계획·구조검토 필수' }
+  : { title: 'A안 · 임시 베이스 안착 후 밀착 용접', sub: 'H-250×250 사다리형 베이스 제작 → 100t·60t 크레인 회전·안착\n사상 → 600mm 밀착 이동 → 접합부 용접 · 총 11일',
+      end: 'A안 요약 (권장)', endSub: '베이스 3일 · 안착 1일 · 사상 2일 · 밀착 2일 · 용접 3일\n크레인 1일 투입, 하부 용접 통로 확보\n베이스는 공사 후 회수' };
+const TAIL = 4;
+window.renderAt = (t) => {
+  const st = Math.min(t, TOTAL ?? 1e9);
+  (PLAN === 'B' ? frameB : frameA)(st);
+  let op = 0, end = false;
+  if (t < 3.2) op = 1; else if (t < 4) op = 1 - (t - 3.2) / 0.8;
+  if (t > TOTAL) { end = true; op = Math.min(1, (t - TOTAL) / 0.6); }
+  cardEl.style.opacity = op;
+  cardEl.querySelector('.k2').textContent = end ? CARD.end : CARD.title;
+  cardEl.querySelector('.k3').textContent = end ? CARD.endSub : CARD.sub;
+  for (const id of ['cap', 'days', 'tagL', 'tagR']) document.getElementById(id).style.opacity = 1 - op;
+  renderer.render(scene, camera);
+  return TOTAL + TAIL;
+};
 window.renderAt(0);
 window.__ready = true;
 </script></body></html>
