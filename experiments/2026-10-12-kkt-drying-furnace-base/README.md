@@ -22,6 +22,7 @@
 
 - `base_ladder_v3.py` → `base_ladder_v3.png` 검토 도면·자재표
 - `load_check.py` 개략 하중검토
+- `estimate/` 견적서 엑셀 (`python3 build_estimate.py`로 재생성, 단가는 노란 칸 입력)
 - `render/` three.js 렌더링 (`npm i`, `python3 -m http.server 8123`, `node shot.mjs '[["1",0,"r1.png"],["2",0,"r2.png"],["3",1,"r3.png"]]'`)
 
 ## 남은 일
