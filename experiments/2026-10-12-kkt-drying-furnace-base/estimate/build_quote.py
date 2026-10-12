@@ -46,15 +46,14 @@ WELD = [
     ("기타비용", "일반관리비", "", "DAY", 5, 600000, "", False),
 ]
 BASE = [
-    ("제작작업", "재료비", "강재 H-250·H-200·H-150·H-125", "KG", round(STEEL_KG), 1300, "자재산출 시트, 손실 5% 포함", False),
+    ("자재", "H빔 구매 (중고)", "H-250×250, 10m 4EA·5m 16EA·0.6m 30EA", "식", 1, 9577783, "공급처 견적, 신품 시 13,575,440원", False),
+    ("자재", "운임", "H빔 운반", "식", 1, 160000, "공급처 견적", False),
+    ("자재", "지 게 차", "자재 하역·조립", "일", 2, 300000, "", False),
     ("제작작업", "인건비", "제작 기공", "M", 12, 300000, "4명 × 3일", True),
-    ("제작작업", "방청 도장", "프라이머 1회", "㎡", 102, 15000, "자재산출 시트 도장면적", False),
-    ("제작작업", "장비사용료", "용접기·절단기", "SET", 1, 1500000, "", False),
-    ("제작작업", "소모품", "용접봉·가스·디스크", "식", 1, 1500000, "", False),
-    ("제작작업", "슬라이딩면 처리", "그리스·PTFE 시트", "식", 1, 800000, "밀착 이동용 레일 상면", False),
-    ("제작작업", "화 물 차", "운반", "대", 1, 500000, "", False),
-    ("기타비용", "구조검토·제작도", "", "식", 1, 1500000, "레일·기둥·지반 지지력", False),
-    ("기타비용", "일반관리비", "", "DAY", 3, 500000, "", False),
+    ("제작작업", "장비사용료", "용접기·절단기", "SET", 1, 1000000, "", False),
+    ("제작작업", "소모품", "용접봉·가스·디스크", "식", 1, 1000000, "", False),
+    ("제작작업", "슬라이딩면 처리", "그리스·PTFE 시트", "식", 1, 500000, "밀착 이동용 레일 상면", False),
+    ("기타비용", "일반관리비", "", "DAY", 3, 300000, "", False),
 ]
 TARGETS = {"도비": 20_000_000, "용접": 25_000_000, "베이스": 18_000_000}
 
@@ -160,7 +159,7 @@ header(cover, WORK, "공기: 총 11일 (베이스 3일 → 안착 1일 → 사�
 refs = {}
 refs["도비"] = detail("도비", DOBI, "진공건조로 2기 회전·베이스 안착(1일) 및 용접면 밀착 이동(2일)")
 refs["용접"] = detail("용접", WELD, "접합면 사상(2일) 및 접합부 용접(3일)")
-refs["베이스"] = detail("베이스", BASE, "사다리형 일체 베이스 10,000×5,000×H800 제작·설치 (4명 × 3일)")
+refs["베이스"] = detail("베이스", BASE, "사다리형 일체 베이스 제작·설치, H-250×250 (4명 × 3일)")
 
 table_head(cover, 11)
 summary = [("1", "도비 작업", "회전·안착, 밀착 이동", "도비"),
@@ -192,13 +191,39 @@ for rr in range(12, tot + 1):
         if rr >= sup: x.fill = GRAY
     cover.row_dimensions[rr].height = 24
 fr = tot + 2
-for t in FOOT + ["* 베이스 강재는 개략 산출(약 3.2톤)이며 구조검토 결과에 따라 변경될 수 있습니다.",
+for t in FOOT + ["* 베이스 H빔은 중고품 기준입니다. 신품 적용 시 3,997,657원이 추가됩니다.",
                  "* 접합부 용접 길이와 비파괴검사 범위는 발주처 확인 후 정산합니다."]:
     cover.merge_cells(start_row=fr, start_column=1, end_row=fr, end_column=9)
     cover.cell(fr, 1, t).font = font(sz=10); fr += 1
 cover.page_setup.paperSize = 9; cover.sheet_properties.pageSetUpPr.fitToPage = True; cover.page_setup.fitToHeight = 1
 cover.sheet_view.showGridLines = False
 cover.column_dimensions["G"].width = 15
+
+# ---- 베이스 자재 (H빔 구매 견적)
+bs = wb.create_sheet("베이스자재")
+bs["A1"] = "베이스 자재: H빔 H-250×250×9×14 (공급처 견적, 부가세 미포함)"; bs["A1"].font = font(True, 13)
+hd = ["길이(m)", "수량(EA)", "총 길이(m)", "단위중량(kg/m)", "중량(kg)"]
+for c, h in enumerate(hd, 1):
+    x = bs.cell(3, c, h); x.font = font(True); x.fill = GRAY; x.border = BOX; x.alignment = CEN
+for i, (ln, q) in enumerate([(10, 4), (5, 16), (0.6, 30)]):
+    r = 4 + i
+    bs.cell(r, 1, ln).font = font(color="0000FF"); bs.cell(r, 2, q).font = font(color="0000FF")
+    bs.cell(r, 3, f"=A{r}*B{r}"); bs.cell(r, 4, 72.4).font = font(color="0000FF"); bs.cell(r, 5, f"=C{r}*D{r}")
+    for c in range(1, 6): bs.cell(r, c).border = BOX; bs.cell(r, c).alignment = CEN
+    bs.cell(r, 5).number_format = '#,##0'
+bs.cell(7, 2, "합계").font = font(True); bs.cell(7, 3, "=SUM(C4:C6)"); bs.cell(7, 5, "=SUM(E4:E6)"); bs.cell(7, 5).number_format = '#,##0'
+for c in range(1, 6): bs.cell(7, c).border = BOX; bs.cell(7, c).fill = GRAY; bs.cell(7, c).alignment = CEN
+rows = [("신품", 13575440), ("중고 (견적 반영)", 9577783), ("운임", 160000), ("지게차 2일", 600000)]
+bs.cell(9, 1, "구분").font = font(True); bs.cell(9, 2, "금액(원)").font = font(True); bs.cell(9, 3, "kg당(원)").font = font(True)
+for i, (k, v) in enumerate(rows):
+    r = 10 + i
+    bs.cell(r, 1, k); bs.cell(r, 2, v).font = font(color="0000FF"); bs.cell(r, 2).number_format = WON
+    if i < 2: bs.cell(r, 3, f"=B{r}/$E$7"); bs.cell(r, 3).number_format = '#,##0'
+    for c in range(1, 4): bs.cell(r, c).border = BOX
+bs.cell(14, 1, "신품 차액"); bs.cell(14, 2, "=B10-B11"); bs.cell(14, 2).number_format = WON
+bs.cell(16, 1, "단위중량 72.4 kg/m는 KS H-250×250×9×14 공칭값이에요. 수량·금액은 사용자가 받은 공급처 견적이에요.").font = font(sz=9, color="555555")
+for col, w in zip("ABCDE", [18, 16, 14, 16, 14]): bs.column_dimensions[col].width = w
+bs.sheet_view.showGridLines = False
 
 # ---- 공정표
 ps = wb.create_sheet("공정표")
