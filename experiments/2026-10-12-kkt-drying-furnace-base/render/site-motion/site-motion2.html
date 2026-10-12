@@ -120,7 +120,7 @@ const STAGES=PLAN==='A'?[
  [0,1.5,'B안 · 기존 조방 7×3m 배치'],[1.5,3,'B안 · 조방 외곽 보강보(H-200) 용접 보강'],[3,6,'바닥에 닿을 면(원래 우측면)의 플랜지·노즐 등 기구물 제거'],
  [6,8,'1번 · 100톤 상단 4점 결속 → 인양'],[8,11,'1번 · 공중 수평 180° 회전'],[11,15,'1번 · 60톤 하단 2점 인양 → 수직 90° 반전 (원래 바닥면이 옆으로)'],[15,17,'1번 · 반전 자세로 원래 자리에 내려놓기'],[17,18,'1번 · 줄걸이 해제 / 60톤 대기'],[18,19,'1번 · 새 상단 4점에 재결속'],[19,21,'1번 · 100톤 단독 재인양'],[21,25,'1번 · 조방으로 이동 (도어 → 화면 위, 원래 바닥면 → 왼쪽)'],[25,27,'1번 · 조방 위 안착 · 원래 우측면이 바닥'],
  [27,29,'2번 · 100톤 상단 4점 결속 → 인양'],[29,33,'2번 · 60톤 하단 2점 인양 → 수직 90° 반전'],[33,35,'2번 · 반전 자세로 원래 자리에 내려놓기'],[35,36,'2번 · 줄걸이 해제 / 60톤 대기'],[36,37,'2번 · 새 상단 4점에 재결속'],[37,39,'2번 · 100톤 단독 재인양'],[39,43,'2번 · 수평 180° 선회하며 조방으로 이동'],[43,45,'2번 · 사상 간격 600mm 남기고 조방 위 안착'],
- [45,49,'절단면 사상 · 개선 가공'],[49,52,'밀착 · 정렬 · 가접'],[52,58,'3면 용접 · 왼쪽(원래 바닥면) + 상부 + 오른쪽'],[58,60,'왼쪽에 착지용 받침(조방) 사전 설치'],[60,63,'200톤급 진입(왼쪽) / 100톤 오른쪽으로 이동 (테일링)'],[63,64,'200톤 상단 4점 + 100톤 하단(오른쪽) 2점 결속'],[64,70,'전체(약 83t) 왼쪽으로 90° 회전 → 원래 바닥면이 바닥으로'],[70,71,'안착 · 줄걸이 해제'],[71,76,'원래 우측면(회전 전 바닥면) 접합부 용접 → 마무리'],[76,78,'제거했던 기구물 복원'],[78,99,'완료 · 4면 용접 일체화, 받침 위 정상 자세']
+ [45,49,'절단면 사상 · 개선 가공'],[49,52,'밀착 · 정렬 · 가접'],[52,58,'3면 용접 · 왼쪽(원래 바닥면) + 상부 + 오른쪽'],[58,60,'왼쪽에 착지용 받침(조방) 사전 설치'],[60,63,'200톤급 진입(왼쪽) · 100톤·60톤은 대기'],[63,64,'200톤 상단 4점 결속 (단독 회전, 왼쪽 하단 모서리가 축)'],[64,70,'전체(약 83t) 왼쪽으로 90° 회전 → 원래 바닥면이 바닥으로'],[70,71,'안착 · 줄걸이 해제'],[71,76,'원래 우측면(회전 전 바닥면) 접합부 용접 → 마무리'],[76,78,'제거했던 기구물 복원'],[78,99,'완료 · 4면 용접 일체화, 받침 위 정상 자세']
 ];
 const stageOf=T=>{for(const s of STAGES)if(T>=s[0]&&T<s[1])return s[2];return STAGES[STAGES.length-1][2]};
 // ---------------- 자세 계산
@@ -168,7 +168,7 @@ window.renderFrame=function(TT){
  // ---------------- 크레인 위치 (주 100t 위쪽, 보조 60t 아래쪽: 붐이 서로 반대편에서 들어와 겹치지 않음)
  setCrane(tail,12,5.5,false);
  let mainXZ=[16,-7];let bigVisible=false;
- if(PLAN==='B'){const k=lin(t,...S.repos);if(k>0){const k1=Math.min(1,k*2),k2=Math.max(0,k*2-1);mainXZ=[16+11*k1,-7+11*k2]}
+ if(PLAN==='B'){
   bigVisible=t>=S.repos[0];const kb=f(t,...S.repos);setCrane(big,-12+24.5*kb,-7.5,false);big.g.visible=bigVisible;big.boom.visible=bigVisible}
  else{big.g.visible=false;big.boom.visible=false}
  setCrane(main,mainXZ[0],mainXZ[1],false);
@@ -181,7 +181,7 @@ window.renderFrame=function(TT){
   const rot=v=>{const d=v.clone().sub(pv).applyQuaternion(qt);return pv.clone().add(d)};
   const topPts=[[cx-2.45,JH+6,z1],[cx-2.45,JH+6,z2],[cx+2.45,JH+6,z1],[cx+2.45,JH+6,z2]].map(p=>rot(new THREE.Vector3(...p)));
   const botPts=[[cx+3,JH+.1,z1],[cx+3,JH+.1,z2]].map(p=>rot(new THREE.Vector3(...p)));
-  rig(big,topPts,bigSlings,true,4.5);rig(main,botPts,tailSlings,true,2.5);rig(tail,[],mainSlings,false);mainSlings.forEach(m=>m.visible=false)}
+  rig(big,topPts,bigSlings,true,4.5);rig(main,[],mainSlings,false);rig(tail,[],tailSlings,false);mainSlings.forEach(m=>m.visible=false);tailSlings.forEach(m=>m.visible=false)}
  else{rig(main,world(tk,mainPts),mainSlings,(mainOn1||mainOn2)&&t<S.grind[0],4);rig(tail,world(tk,risingEdge(sp)),tailSlings,tailOn&&t<S.grind[0],2.5);if(PLAN==='B')rig(big,[],bigSlings,false);bigSlings.forEach(m=>m.visible=false)}
  if(!bigVisible){big.hook.visible=false;big.cable.visible=false}
  // ---------------- 렌더
@@ -195,7 +195,7 @@ window.renderFrame=function(TT){
  if(VIEW==='closeup'){const d=cen.clone().add(off);detail.aspect=16/9;detail.fov=38;detail.updateProjectionMatrix();detail.position.copy(d);detail.lookAt(cen);renderer.setSize(1920,1080,false);renderer.render(scene,detail);ctx.clearRect(0,0,1920,1080);ctx.drawImage(renderer.domElement,0,0);
   const C=detail;
   for(const [tank,name,color] of [[one,`1번 · ${W1}톤 · 도어부`,'#6de2eb'],[two,`2번 · ${W2}톤 · 후면부`,'#ffd08e']]){const p=project(tank.root.position.clone().add(new THREE.Vector3(0,4.2,0)),C);if(p[0]>80&&p[0]<1840&&p[1]>120&&p[1]<1000)label(name,p[0],p[1],color)}
-  for(const [c,name,col] of [[main,PLAN==='B'&&t>=S.repos[0]?'100톤 · 테일링(하단 2점)':'주 크레인 100톤 · 상단 4점','#ffe2a3'],[tail,'보조 60톤 · 하단 2점 반전','#ffc9a0'],[big,'200톤급 · 상단 4점 회전','#ffb3a7']]){if(!c.g.visible)continue;const p=project(c.pos.clone().add(new THREE.Vector3(0,3,0)),C);if(p[0]>100&&p[0]<1820&&p[1]>120&&p[1]<1000)label(name,p[0],p[1],col,22)}
+  for(const [c,name,col] of [[main,'주 크레인 100톤 · 상단 4점','#ffe2a3'],[tail,'보조 60톤 · 하단 2점 반전','#ffc9a0'],[big,'200톤급 · 상단 4점 회전','#ffb3a7']]){if(!c.g.visible)continue;const p=project(c.pos.clone().add(new THREE.Vector3(0,3,0)),C);if(p[0]>100&&p[0]<1820&&p[1]>120&&p[1]<1000)label(name,p[0],p[1],col,22)}
   if(t<S.p[0].lift[0]&&T>=0){const lines=PLAN==='A'?['임시 베이스 10,000 × 5,000 × H1,100','중고 H-250×250×9×14 (회수조건)','① 하부 사다리: 레일 4줄 + 가로대 8본','② 기둥 32본 H600','③ 상부 레일 4줄 10m 연속','④ 상부 가로대 8본 → 레일끼리 용접 결속','   (바깥으로 밀려 휘는 것 방지)','접합선 아래 W1,100 통로, 순높이 600']:['기존 조방 7,000 × 3,000 (H500)','외곽 보강보 H-200 약 25m 용접','유닛 발자국 약 8,800 × 6,000 수용','바닥 접촉면(원래 우측면) 기구물 제거'];
    ctx.fillStyle='rgba(13,25,34,.86)';ctx.fillRect(1380,120,520,70+lines.length*30);ctx.fillStyle='#ffe2a3';ctx.font=`600 24px ${FONT}`;ctx.textAlign='left';ctx.fillText(PLAN==='A'?'빔 베이스 구성':'조방 개조',1400,158);ctx.fillStyle='#e9eff2';ctx.font=`21px ${FONT}`;lines.forEach((l,i)=>ctx.fillText(l,1400,196+i*30))}
   if(T<0)callout('현재 상태 · 클로즈업',960,990);
@@ -214,13 +214,13 @@ window.renderFrame=function(TT){
   if(t<S.p[0].lift[0]){const p=P(two.root.position);label('후면부 · 절단면 바닥',p[0],p[1]+52,'#ffd08e')}
   let rot=null;const s0=S.p[0],s1=S.p[1];
   if(PLAN==='A'){if(t>=s0.flip[0]&&t<s0.flip[1])rot=[one,'회전 · 정면 기준 시계 90°'];else if(t>=s1.yawPre[0]&&t<s1.yawPre[1])rot=[two,'회전 · 수평 180°'];else if(t>=s1.flip[0]&&t<s1.flip[1])rot=[two,'회전 · 수직 반시계 90°']}
-  else{if(t>=s0.yawPre[0]&&t<s0.yawPre[1])rot=[one,'회전 · 수평 180°'];else if(t>=s0.flip[0]&&t<s0.flip[1])rot=[one,'반전 · 수직 90° (원래 바닥면 → 옆)'];else if(t>=s1.flip[0]&&t<s1.flip[1])rot=[two,'반전 · 수직 90°'];else if(t>=s1.move[0]&&t<s1.move[1])rot=[two,'이동 중 수평 180° 선회'];else if(t>=S.tip[0]&&t<S.tip[1])rot=[null,'전체 왼쪽으로 90° 회전 · 200톤 + 100톤']}
+  else{if(t>=s0.yawPre[0]&&t<s0.yawPre[1])rot=[one,'회전 · 수평 180°'];else if(t>=s0.flip[0]&&t<s0.flip[1])rot=[one,'반전 · 수직 90° (원래 바닥면 → 옆)'];else if(t>=s1.flip[0]&&t<s1.flip[1])rot=[two,'반전 · 수직 90°'];else if(t>=s1.move[0]&&t<s1.move[1])rot=[two,'이동 중 수평 180° 선회'];else if(t>=S.tip[0]&&t<S.tip[1])rot=[null,'전체 왼쪽으로 90° 회전 · 200톤 단독']}
   if(rot){const p=rot[0]?P(rot[0].root.position.clone().add(new THREE.Vector3(-4,0,-3.5))):P(baseCenter.clone().add(new THREE.Vector3(-6,0,-7)));callout(rot[1],p[0],p[1])}
-  for(const [c,name] of [[main,PLAN==='B'&&t>=S.repos[0]?'100톤 · 테일링 하단 2점':'주 크레인 100톤 · 상단 4점'],[tail,'보조 60톤 · 하단 2점 (반전)'],[big,'200톤급 · 상단 4점 (전체 회전)']]){if(!c.g.visible)continue;const p=P(c.pos.clone().add(new THREE.Vector3(0,0,-3.6)));label(name,p[0],p[1],'#ffe2a3')}
+  for(const [c,name] of [[main,'주 크레인 100톤 · 상단 4점'],[tail,'보조 60톤 · 하단 2점 (반전)'],[big,'200톤급 · 상단 4점 (전체 회전)']]){if(!c.g.visible)continue;const p=P(c.pos.clone().add(new THREE.Vector3(0,0,-3.6)));label(name,p[0],p[1],'#ffe2a3')}
   for(const [tank,name,color] of [[one,`1번 · ${W1}톤 · 도어부`,'#6de2eb'],[two,`2번 · ${W2}톤 · 후면부`,'#ffd08e']]){const p=P(tank.root.position.clone().add(new THREE.Vector3(0,3,3.6)));label(name,p[0],p[1],color)}
   // 정보 패널
   const px=24,py=112;const lines=PLAN==='A'?[['사용 기중기','#ffe2a3',22],['주: 100톤 (위쪽 고정 1회 설치)','#e9eff2'],['  상단 4점 인양 · 반전 후 재결속 · 단독 이동','#e9eff2'],['보조: 60톤 (아래쪽 고정)','#e9eff2'],['  하단 2점 · 반전(Tailing) 전용','#e9eff2'],['  붐이 서로 반대편 → 교차 없음','#e9eff2'],['대상물','#ffe2a3',22],[`1번 도어부 ${W1}톤 · 시계 90°`,'#6de2eb'],[`2번 후면부 ${W2}톤 · 180° → 반시계 90°`,'#ffd08e'],['■ 현 위치   ┅ 이동 장소','#ff8a80']]:
-   [['사용 기중기','#ffe2a3',22],['주: 100톤 (위쪽) → 회전 시 오른쪽 테일링','#e9eff2'],['보조: 60톤 (아래쪽) 하단 2점 반전','#e9eff2'],['회전: 200톤급 (왼쪽) 상단 4점','#e9eff2'],['  전체 약 83t 왼쪽 90° 회전','#e9eff2'],['대상물','#ffe2a3',22],[`1번 도어부 ${W1}톤 · 180° → 수직 90°`,'#6de2eb'],[`2번 후면부 ${W2}톤 · 수직 90° → 180°`,'#ffd08e'],['조방 안착 시 원래 바닥면 = 왼쪽','#e9eff2'],['3면 용접 → 좌회전 → 우측면 용접','#e9eff2'],['■ 현 위치   ┅ 이동 장소','#ff8a80']];
+   [['사용 기중기','#ffe2a3',22],['주: 100톤 (위쪽) 안착·밀착','#e9eff2'],['보조: 60톤 (아래쪽) 하단 2점 반전','#e9eff2'],['회전: 200톤급 (왼쪽) 단독 · 상단 4점','#e9eff2'],['  전체 약 83t, 왼쪽 하단 모서리 축','#e9eff2'],['대상물','#ffe2a3',22],[`1번 도어부 ${W1}톤 · 180° → 수직 90°`,'#6de2eb'],[`2번 후면부 ${W2}톤 · 수직 90° → 180°`,'#ffd08e'],['조방 안착 시 원래 바닥면 = 왼쪽','#e9eff2'],['3면 용접 → 좌회전 → 우측면 용접','#e9eff2'],['■ 현 위치   ┅ 이동 장소','#ff8a80']];
   ctx.fillStyle='rgba(13,25,34,.88)';ctx.fillRect(px,py,430,30+lines.length*28);ctx.textAlign='left';let yy=py+34;for(const [tx,col,sz] of lines){ctx.fillStyle=col;ctx.font=sz?`600 ${sz}px ${FONT}`:`19px ${FONT}`;ctx.fillText(tx,px+18,yy);yy+=28}
   if(T<0)callout('현재 상태 · 현 위치',960,938);
   // 인셋 없음 (클로즈업 영상 별도)
