@@ -1,0 +1,448 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+html,body{margin:0;background:#000;overflow:hidden;font-family:"WenQuanYi Zen Hei",sans-serif}
+#cap{position:absolute;left:36px;top:30px;background:rgba(15,20,28,.78);color:#fff;padding:14px 22px 16px;border-left:6px solid #e8742a;max-width:900px}
+#cap .plan{font-size:20px;color:#f3b48a;letter-spacing:1px}
+#cap .title{font-size:40px;font-weight:bold;margin-top:2px}
+#cap .crew{font-size:22px;color:#d7dde4;margin-top:6px}
+#days{position:absolute;right:36px;top:30px;display:flex;gap:4px}
+#days div{width:34px;height:34px;background:rgba(15,20,28,.6);color:#9aa4ae;font-size:16px;display:flex;align-items:center;justify-content:center}
+#days div.on{background:#e8742a;color:#fff}
+#days div.done{background:rgba(232,116,42,.35);color:#fff}
+#note{position:absolute;left:36px;bottom:22px;color:#fff;font-size:17px;background:rgba(0,0,0,.45);padding:5px 12px}
+.tag{position:absolute;color:#fff;font-size:22px;font-weight:bold;background:rgba(15,20,28,.72);padding:3px 10px;transform:translate(-50%,-100%);white-space:nowrap}
+</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<div id="cap"><div class="plan"></div><div class="title"></div><div class="crew"></div></div>
+<div id="days"></div>
+<div id="note">개념 시각화 · 크레인 위치·줄걸이·하중배분·작업반경 미검토 · 실제 인양계획 아님</div>
+<div id="tagL" class="tag"></div><div id="tagR" class="tag"></div>
+<script type="module">
+import * as THREE from 'three';
+import { Sky } from 'three/addons/objects/Sky.js';
+
+const q = new URLSearchParams(location.search);
+const PLAN = q.get('plan') || 'A';
+const W = +(q.get('w') || 1280), H = +(q.get('h') || 720);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.78;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scale = W / 1920;
+document.querySelectorAll('#cap,#days,#note').forEach(e => { e.style.transformOrigin = e.id === 'days' ? 'top right' : (e.id === 'note' ? 'bottom left' : 'top left'); e.style.transform = `scale(${scale})`; });
+
+const scene = new THREE.Scene();
+const sky = new Sky(); sky.scale.setScalar(450000); scene.add(sky);
+const sun = new THREE.Vector3();
+sun.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - 42), THREE.MathUtils.degToRad(52));
+const u = sky.material.uniforms;
+u.turbidity.value = 2.2; u.rayleigh.value = 2.4; u.mieCoefficient.value = 0.004; u.mieDirectionalG.value = 0.8;
+u.sunPosition.value.copy(sun);
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = pm.fromScene(sky, 0.02).texture;
+const sunLight = new THREE.DirectionalLight(0xfff1de, 3.4);
+sunLight.position.copy(sun).multiplyScalar(45).add(new THREE.Vector3(5, 0, 4));
+sunLight.target.position.set(5, 0, 4);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+const sc = sunLight.shadow.camera; sc.left = -20; sc.right = 20; sc.top = 20; sc.bottom = -20; sc.near = 1; sc.far = 140;
+sunLight.shadow.bias = -0.0004; sunLight.shadow.normalBias = 0.03;
+scene.add(sunLight, sunLight.target);
+scene.add(new THREE.HemisphereLight(0xdfe6ee, 0x5d5a52, 0.55));
+scene.fog = new THREE.Fog(0xc9d3de, 55, 170);
+
+function noiseTex(size, base, vari, speck, rep, seed = 1) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, size, size);
+  let s = seed; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const img = g.getImageData(0, 0, size, size);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = (rnd() - 0.5) * vari + (rnd() < speck ? (rnd() - 0.5) * vari * 3 : 0);
+    img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+const asphalt = noiseTex(1024, '#4d4d4f', 70, 0.04, 40, 7);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({ map: asphalt, roughness: 0.96, bumpMap: asphalt, bumpScale: 0.25 }));
+ground.rotation.x = -Math.PI / 2; ground.position.set(5, 0, 4); ground.receiveShadow = true; scene.add(ground);
+
+const M = (color, rough = 0.55, metal = 0.45, map) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, map });
+const matPrimer = M(0xffffff, 0.62, 0.35, noiseTex(512, '#5f3429', 30, 0.03, 3, 3));
+const matColumn = M(0x9aa0a6, 0.5, 0.65, noiseTex(512, '#70767c', 26, 0.03, 3, 13));
+const matJig = M(0x6e7680, 0.6, 0.5, noiseTex(512, '#596069', 24, 0.03, 3, 17));
+const matNew = M(0xe8742a, 0.55, 0.35);
+const matWeld = M(0x2b2b2b, 0.7, 0.5);
+const matUnit = M(0x8b9094, 0.55, 0.45, noiseTex(512, '#5f6468', 24, 0.02, 2, 21));
+const matUnitDark = M(0x5a5f64, 0.7, 0.3);
+const matRust = M(0x7b5a45, 0.8, 0.3);
+const matYellow = M(0xd6a31c, 0.55, 0.4, noiseTex(256, '#b98a14', 20, 0.02, 4, 41));
+const matCraneW = M(0xe9e6df, 0.5, 0.4);
+const matCraneR = M(0xc8372d, 0.5, 0.4);
+const matTire = M(0x1b1b1b, 0.9, 0.1);
+const matTimber = M(0x8a6a44, 0.9, 0.05);
+const matCable = new THREE.LineBasicMaterial({ color: 0x222222 });
+const matPipe = M(0xd8b437, 0.5, 0.4);
+
+const S = 0.001;
+function box(x0, x1, y0, y1, z0, z1, mat, parent = scene) {   // mm: x length, y plan(width), z height
+  const m = new THREE.Mesh(new THREE.BoxGeometry((x1 - x0) * S, (z1 - z0) * S, (y1 - y0) * S), mat);
+  m.position.set((x0 + x1) / 2 * S, (z0 + z1) / 2 * S, (y0 + y1) / 2 * S);
+  m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+function ibeamX(x0, x1, yc, z0, z1, b, tf, tw, mat, p) { box(x0, x1, yc - b / 2, yc + b / 2, z0, z0 + tf, mat, p); box(x0, x1, yc - b / 2, yc + b / 2, z1 - tf, z1, mat, p); box(x0, x1, yc - tw / 2, yc + tw / 2, z0 + tf, z1 - tf, mat, p); }
+function ibeamY(xc, y0, y1, z0, z1, b, tf, tw, mat, p) { box(xc - b / 2, xc + b / 2, y0, y1, z0, z0 + tf, mat, p); box(xc - b / 2, xc + b / 2, y0, y1, z1 - tf, z1, mat, p); box(xc - tw / 2, xc + tw / 2, y0, y1, z0 + tf, z1 - tf, mat, p); }
+
+// ---------------- background: wall + 30t gantry ----------------
+box(-120000, 140000, -27000, -26500, 0, 11000, M(0xb4b8bb, 0.85, 0.15, noiseTex(256, '#a9adb0', 14, 0.01, 20, 31)));
+const matBand = M(0x4a74c0, 0.6, 0.2);
+box(-120000, 140000, -26500, -26480, 6200, 7400, matBand); box(-120000, 140000, -26500, -26480, 3600, 4200, matBand);
+const gx = -4500;
+for (const gz of [-4000, 9000]) { box(gx - 350, gx + 350, gz - 300, gz + 300, 0, 9200, matYellow); box(gx - 350, gx + 350, gz - 1000, gz + 1000, 0, 500, matYellow); }
+box(gx - 450, gx + 450, -4300, 9300, 8800, 9800, matYellow);
+
+// ---------------- plan A base: ladder + columns + ladder ----------------
+const baseA = { bot: new THREE.Group(), col: new THREE.Group(), top: new THREE.Group() };
+scene.add(baseA.bot, baseA.col, baseA.top);
+{
+  const L = 10000, RAIL_Y = [300, 1400, 3600, 4700], STA = [150, 2400, 4625, 5375, 7600, 9850], LANE = [4700, 5300];
+  for (const yc of RAIL_Y) {
+    ibeamX(0, L, yc, 550, 800, 125, 9, 6, matPrimer, baseA.top);
+    ibeamX(0, LANE[0], yc, 0, 200, 100, 8, 5.5, matPrimer, baseA.bot);
+    ibeamX(LANE[1], L, yc, 0, 200, 100, 8, 5.5, matPrimer, baseA.bot);
+    box(10000, 10350, yc - 100, yc + 100, 550, 800, matPrimer, baseA.top);            // push bracket (rail end)
+  }
+  for (const xc of STA) {
+    for (let k = 0; k < 3; k++) {
+      ibeamY(xc, RAIL_Y[k] + 62.5, RAIL_Y[k + 1] - 62.5, 650, 800, 75, 7, 5, matPrimer, baseA.top);
+      ibeamY(xc, RAIL_Y[k] + 50, RAIL_Y[k + 1] - 50, 0, 150, 75, 7, 5, matPrimer, baseA.bot);
+    }
+    for (const yc of RAIL_Y) box(xc - 62.5, xc + 62.5, yc - 62.5, yc + 62.5, 200, 550, matColumn, baseA.col);
+  }
+}
+// ---------------- plan B: existing jig 7m x 3m + modification ----------------
+const jig = { old: new THREE.Group(), add: new THREE.Group() };
+scene.add(jig.old, jig.add);
+{
+  const x0 = 1500, x1 = 8500, ya = 900, yb = 3900;          // 7,000 x 3,000 centred under the furnace
+  for (const yc of [ya + 150, 2400 - 500, 2400 + 500, yb - 150]) ibeamX(x0, x1, yc, 0, 300, 300, 15, 10, matJig, jig.old);
+  for (let x = x0 + 150; x <= x1 - 150; x += 1340) ibeamY(x, ya, yb, 300, 600, 300, 15, 10, matJig, jig.old);
+  // modification: outrigger beams to the full furnace footprint + cribbing for the 90° turn
+  for (const yc of [300, 4700]) ibeamX(600, 9400, yc, 300, 600, 200, 12, 8, matNew, jig.add);
+  for (const xc of [600, 2840, 5000, 7160, 9400]) ibeamY(xc, 300, 4700, 300, 600, 200, 12, 8, matNew, jig.add);
+}
+const crib = new THREE.Group(); scene.add(crib);     // timber cribbing where the turned furnace will land (front side)
+for (let i = 0; i < 6; i++) for (let k = 0; k < 2; k++) {
+  const x = 1200 + i * 1500;
+  box(x - 120, x + 120, 5400, 9600, k * 240, k * 240 + 240, matTimber, crib);
+}
+
+// ---------------- furnace pieces ----------------
+// piece local frame: origin at bottom centre of the joint face. dir = +1 extends +x, -1 extends -x
+const PL = 4400, PW = 4800, PH = 4000;
+function piece(dir, opening) {
+  const outer = new THREE.Group(); const g = new THREE.Group(); outer.add(g);
+  const x0 = dir > 0 ? 0 : -PL, x1 = dir > 0 ? PL : 0, y0 = -PW / 2, y1 = PW / 2;
+  box(x0, x1, y0, y0 + 12, 0, PH, matUnitDark, g);
+  for (let t = 0; t <= 4; t++) box(x0, x1, y0, y1, t * 1000 - (t ? 40 : 0), t * 1000 + 70, matUnit, g);
+  const n = 8;
+  for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n; box(x - 6, x + 6, y0, y1, 0, PH, matUnit, g); }
+  for (let i = 0; i <= 4; i++) { const x = x0 + 60 + (x1 - x0 - 120) * i / 4; box(x - 12, x + 12, y1 + 78, y1 + 90, -200, PH + 400, i % 2 ? matRust : matUnit, g); }
+  // end wall (outer end), optionally with an opening (door side)
+  const xe = dir > 0 ? x1 : x0;
+  if (opening) {
+    box(xe - 15, xe + 15, y0, y0 + 1100, 0, PH, matUnit, g); box(xe - 15, xe + 15, y1 - 1100, y1, 0, PH, matUnit, g);
+    box(xe - 15, xe + 15, y0, y1, PH - 700, PH, matUnit, g);
+    box(xe - 40, xe + 40, y0 + 1000, y0 + 1150, 0, PH - 600, matRust, g); box(xe - 40, xe + 40, y1 - 1150, y1 - 1000, 0, PH - 600, matRust, g);
+  } else box(xe - 15, xe + 15, y0, y1, 0, PH, matUnit, g);
+  // pipes / nozzles on the front face (+y): removed in plan B before the turn
+  const pipes = new THREE.Group(); g.add(pipes);
+  for (const [fx, fz, r] of [[0.3, 600, 120], [0.72, 2500, 150], [0.5, 3500, 90]]) {
+    const x = x0 + (x1 - x0) * fx;
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(r * S, r * S, 0.42, 24), matPipe);
+    c.rotation.x = Math.PI / 2; c.position.set(x * S, fz * S, (y1 + 210) * S); c.castShadow = true; pipes.add(c);
+    const f = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.5 * S, r * 1.5 * S, 0.035, 24), matUnit);
+    f.rotation.x = Math.PI / 2; f.position.set(x * S, fz * S, (y1 + 420) * S); pipes.add(f);
+  }
+  scene.add(outer);
+  return { outer, g, pipes };
+}
+const pL = piece(-1, true);   // near the gantry, with opening: 35t
+const pR = piece(1, false);   // far side: 48t
+const assembly = new THREE.Group(); scene.add(assembly);   // used in plan B for the 90° turn
+
+// ---------------- workers ----------------
+const matSuit = M(0x27406b, 0.8, 0.05), matSkin = M(0xc99b7a, 0.8, 0), matHelmet = M(0xf2c200, 0.4, 0.1);
+function worker() {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.9, 4, 10), matSuit); body.position.y = 0.75; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), matSkin); head.position.y = 1.55; g.add(head);
+  const hel = new THREE.Mesh(new THREE.SphereGeometry(0.155, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), matHelmet); hel.position.y = 1.58; g.add(hel);
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  scene.add(g); g.visible = false; return g;
+}
+const crew = Array.from({ length: 8 }, worker);
+function placeCrew(list) { crew.forEach((w, i) => { const p = list[i]; w.visible = !!p; if (p) { w.position.set(p[0], p[1] || 0, p[2]); w.rotation.set(p[4] || 0, p[3] || 0, 0); } }); }
+
+// ---------------- mobile cranes ----------------
+function mobileCrane(boomLen, mat, scaleK = 1) {
+  const g = new THREE.Group(); scene.add(g);
+  const k = scaleK;
+  const carrier = new THREE.Mesh(new THREE.BoxGeometry(13 * k, 1.6 * k, 2.8 * k), matCraneW); carrier.position.y = 1.6 * k; carrier.castShadow = true; g.add(carrier);
+  for (let i = 0; i < 5; i++) for (const s of [-1, 1]) {
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.62 * k, 0.62 * k, 0.5 * k, 20), matTire); w.rotation.x = Math.PI / 2; w.position.set((-5 + i * 2.4) * k, 0.62 * k, s * 1.25 * k); g.add(w);
+  }
+  for (const sx of [-5.5, 5.5]) for (const s of [-1, 1]) {   // outriggers
+    const o = new THREE.Mesh(new THREE.BoxGeometry(0.4 * k, 0.4 * k, 3.4 * k), matCraneR); o.position.set(sx * k, 1.0 * k, s * 2.9 * k); g.add(o);
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.35 * k, 0.35 * k, 1.0 * k, 12), matCraneR); p.position.set(sx * k, 0.5 * k, s * 4.4 * k); g.add(p);
+  }
+  const slew = new THREE.Group(); slew.position.set(1.5 * k, 2.4 * k, 0); g.add(slew);
+  const house = new THREE.Mesh(new THREE.BoxGeometry(5 * k, 1.8 * k, 2.6 * k), mat); house.position.set(-1.5 * k, 0.9 * k, 0); house.castShadow = true; slew.add(house);
+  const cw = new THREE.Mesh(new THREE.BoxGeometry(1.2 * k, 1.6 * k, 2.6 * k), matTire); cw.position.set(-4.4 * k, 0.9 * k, 0); slew.add(cw);
+  const luff = new THREE.Group(); luff.position.set(0.6 * k, 1.8 * k, 0); slew.add(luff);
+  const boom = new THREE.Mesh(new THREE.BoxGeometry(boomLen, 0.9 * k, 0.8 * k), mat); boom.position.x = boomLen / 2; boom.castShadow = true; luff.add(boom);
+  const tipGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+  const line = new THREE.Line(tipGeo, matCable); scene.add(line);
+  const hook = new THREE.Mesh(new THREE.BoxGeometry(0.6 * k, 0.9 * k, 0.4 * k), matCraneR); hook.castShadow = true; scene.add(hook);
+  const slings = new THREE.LineSegments(new THREE.BufferGeometry(), matCable); scene.add(slings);
+  const pivot = new THREE.Vector3();
+  return {
+    g, show(v) { g.visible = line.visible = hook.visible = slings.visible = v; },
+    // aim boom tip above target, hook at hookY, slings to points
+    aim(target, hookY, slingPts = []) {
+      g.updateMatrixWorld(true); luff.getWorldPosition(pivot);
+      const dx = target.x - pivot.x, dz = target.z - pivot.z, R = Math.hypot(dx, dz);
+      const yawWorld = Math.atan2(-dz, dx);
+      slew.rotation.y = yawWorld - g.rotation.y;
+      const ang = Math.acos(Math.min(0.98, R / boomLen)); luff.rotation.z = ang;
+      g.updateMatrixWorld(true);
+      const tip = new THREE.Vector3(boomLen, 0, 0).applyMatrix4(boom.parent.matrixWorld);
+      const hk = new THREE.Vector3(tip.x, hookY, tip.z);
+      tipGeo.setFromPoints([tip, hk]); hook.position.copy(hk);
+      const pts = []; for (const p of slingPts) pts.push(hk.clone().add(new THREE.Vector3(0, -0.45, 0)), p);
+      slings.geometry.setFromPoints(pts); slings.visible = g.visible && pts.length > 0;
+    }
+  };
+}
+const crane100 = mobileCrane(38, M(0xe9e6df, 0.5, 0.4));
+const crane60 = mobileCrane(34, M(0xd8d2c4, 0.5, 0.4), 0.85);
+const crane200 = mobileCrane(40, M(0xdedad1, 0.5, 0.4), 1.15);
+crane100.g.position.set(4.5, 0, 17.5); crane100.g.rotation.y = 0.05;
+crane60.g.position.set(-2.0, 0, 15.0); crane60.g.rotation.y = 0.35;
+crane200.g.position.set(8.0, 0, 21.0); crane200.g.rotation.y = -0.12;
+
+// ---------------- sparks / weld glow ----------------
+const SP = 260;
+const sparkGeo = new THREE.BufferGeometry(); sparkGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SP * 3), 3));
+const sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ color: 0xffb347, size: 0.05, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+scene.add(sparks);
+const glows = [0, 1, 2].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), new THREE.MeshBasicMaterial({ color: 0xcfe8ff })); const l = new THREE.PointLight(0x9fd0ff, 0, 4, 2); m.add(l); scene.add(m); m.visible = false; return { m, l }; });
+const beadMat = M(0x3a3a3a, 0.6, 0.6);
+const bead = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), beadMat); scene.add(bead); bead.visible = false;
+function spray(centers, t, spread = 0.9) {
+  const a = sparkGeo.attributes.position.array; let s = Math.floor(t * 997) + 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < SP; i++) {
+    const c = centers[i % centers.length]; const r = rnd() * spread, th = rnd() * Math.PI * 2, up = rnd();
+    a[i * 3] = c.x + Math.cos(th) * r * 0.6; a[i * 3 + 1] = c.y + up * r * 0.5 - r * r * 0.3; a[i * 3 + 2] = c.z + Math.sin(th) * r;
+  }
+  sparkGeo.attributes.position.needsUpdate = true; sparks.visible = true;
+}
+
+// ---------------- timeline ----------------
+const sm = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+const seg = (t, a, b) => sm((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const camera = new THREE.PerspectiveCamera(36, W / H, 0.1, 600);
+function camKey(keys, t) {   // keys: [time, pos[3], target[3], fov]
+  let i = 0; while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
+  const A = keys[i], B = keys[i + 1]; const k = sm((t - A[0]) / Math.max(0.001, B[0] - A[0]));
+  camera.position.set(lerp(A[1][0], B[1][0], k), lerp(A[1][1], B[1][1], k), lerp(A[1][2], B[1][2], k));
+  camera.lookAt(lerp(A[2][0], B[2][0], k), lerp(A[2][1], B[2][1], k), lerp(A[2][2], B[2][2], k));
+  camera.fov = lerp(A[3], B[3], k); camera.updateProjectionMatrix();
+}
+const capEl = { plan: document.querySelector('#cap .plan'), title: document.querySelector('#cap .title'), crew: document.querySelector('#cap .crew') };
+const daysEl = document.getElementById('days');
+function setCap(planTxt, title, crewTxt, day, total) {
+  capEl.plan.textContent = planTxt; capEl.title.textContent = title; capEl.crew.textContent = crewTxt;
+  daysEl.innerHTML = ''; for (let d = 1; d <= total; d++) { const e = document.createElement('div'); e.textContent = d; if (day && d === day) e.className = 'on'; else if (day && d < day) e.className = 'done'; if (day === 99) e.className = 'done'; daysEl.appendChild(e); }
+}
+const tagL = document.getElementById('tagL'), tagR = document.getElementById('tagR');
+function tag(el, obj, txt, dy = 4.6) {
+  if (!txt) { el.style.display = 'none'; return; }
+  const p = new THREE.Vector3(); obj.getWorldPosition(p); p.y += dy; p.project(camera);
+  if (p.z > 1) { el.style.display = 'none'; return; }
+  el.style.display = 'block'; el.textContent = txt; el.style.left = ((p.x + 1) / 2 * W) + 'px'; el.style.top = ((1 - p.y) / 2 * H) + 'px'; el.style.fontSize = (22 * scale) + 'px';
+}
+// joint at x = 5.0 m, furnace centre line z = 2.5 m. Start positions: lying in the yard in front of the base.
+const START_L = V(1.2, 0, -8.5), START_R = V(9.8, 0, -8.5);
+function setPiece(p, pos, yaw = 0) { p.outer.position.copy(pos); p.outer.rotation.set(0, yaw, 0); }
+function slingPts(p) {
+  p.outer.updateMatrixWorld(true);
+  const pts = [];
+  const d = p === pL ? -1 : 1;
+  for (const xx of [0.5, 3.9]) for (const zz of [-2.1, 2.1]) pts.push(new THREE.Vector3(d * xx, PH * S + 0.08, zz).applyMatrix4(p.outer.matrixWorld));
+  return pts;
+}
+function liftPose(p, t, a, b, from, to, yaw0, yaw1, topY) {   // lift - travel/turn - lower
+  const k1 = seg(t, a, a + (b - a) * 0.25), k2 = seg(t, a + (b - a) * 0.25, a + (b - a) * 0.8), k3 = seg(t, a + (b - a) * 0.8, b);
+  const y = from.y + (topY - from.y) * k1 - (topY - to.y) * k3;
+  const x = lerp(from.x, to.x, k2), z = lerp(from.z, to.z, k2);
+  setPiece(p, V(x, y, z), lerp(yaw0, yaw1, k2));
+}
+function piecesVisible(v) { pL.outer.visible = pR.outer.visible = v; }
+
+let TOTAL;
+function frameA(t) {
+  // 0-4 site | 4-12 base fab D1-3 | 12-24 lift & set D4 | 24-30 grind D5-6 | 30-37 push D7-8 | 37-46 weld D9-11 | 46-50 done
+  TOTAL = 50;
+  const yawStart = Math.PI / 2;  // pieces sit turned 90° in the yard; they are turned in the air while lifted
+  const LAND_L = V(5.0, 0.8, 2.5), LAND_R = V(5.6, 0.8, 2.5), FINAL_R = V(5.0, 0.8, 2.5);
+  baseA.bot.visible = t > 4.2; baseA.col.visible = t > 6.6; baseA.top.visible = t > 8.8;
+  baseA.bot.position.y = -0.25 * (1 - seg(t, 4.2, 5.4)); baseA.col.position.y = 0.5 * (1 - seg(t, 6.6, 7.6)); baseA.top.position.y = 1.2 * (1 - seg(t, 8.8, 10.4));
+  for (const o of [jig.old, jig.add, crib]) o.visible = false;
+  sparks.visible = false; glows.forEach(g => { g.m.visible = false; g.l.intensity = 0; }); bead.visible = false;
+  crane200.show(false);
+  const cranesOn = t > 11 && t < 25.5; crane100.show(cranesOn); crane60.show(cranesOn);
+  // pieces
+  if (t < 12) { setPiece(pL, START_L, yawStart); setPiece(pR, START_R, yawStart); }
+  else if (t < 18) { liftPose(pL, t, 12, 18, START_L, LAND_L, yawStart, 0, 7.2); setPiece(pR, START_R, yawStart); }
+  else if (t < 24) { setPiece(pL, LAND_L, 0); liftPose(pR, t, 18, 24, START_R, LAND_R, yawStart, 0, 7.2); }
+  else if (t < 30) { setPiece(pL, LAND_L, 0); setPiece(pR, LAND_R, 0); }
+  else if (t < 37) { setPiece(pL, LAND_L, 0); setPiece(pR, V(lerp(5.6, 5.0, seg(t, 31, 36)), 0.8, 2.5), 0); }
+  else { setPiece(pL, LAND_L, 0); setPiece(pR, FINAL_R, 0); }
+  if (cranesOn) {
+    const active = t < 18 ? pL : pR;
+    const c = active.outer.getWorldPosition(new THREE.Vector3()); const cy = c.y; c.x += active === pL ? -2.2 : 2.2; c.y = 0;
+    crane100.aim(c.clone().add(V(active === pL ? -0.9 : 0.9, 0, 0)), cy + PH * S + 3.2, slingPts(active));
+    crane60.aim(c.clone().add(V(active === pL ? 0.9 : -0.9, 0, 0)), cy + PH * S + 3.6, []);
+  }
+  // workers
+  if (t < 4) placeCrew([]);
+  else if (t < 12) placeCrew([[1.5, 0, 6.0, 0.4], [4.0, 0, 6.1, -0.2], [7.0, 0, 6.2, 0.6], [9.5, 0, 5.8, -0.5]]);
+  else if (t < 24) placeCrew([[0.5, 0, 7.4, 0.7], [11.5, 0, 7.6, -0.6], [3.2, 0, 8.2, 0.2], [8.0, 0, 8.0, -0.1], [6.2, 0, 9.4, 0.0], [-0.8, 0, 3.0, 1.2], [12.2, 0, 2.2, -1.2], [5.0, 0, 13.6, 3.1]]);
+  else if (t < 30) placeCrew([[5.3, 0.8, 5.2, -1.4], [5.3, 0.8, -0.2, -1.6], [5.3, 4.8, 3.6, -1.5], [5.25, 0, 2.5, 1.57, 0]]);
+  else if (t < 37) placeCrew([[10.9, 0, 1.0, 1.5], [10.9, 0, 4.0, 1.5], [9.0, 0, 6.4, 0.2], [2.0, 0, 6.4, -0.2], [5.0, 0, 7.2, 3.1], [0.5, 0, 6.0, 0.4], [7.0, 0, 7.4, 0.1]]);
+  else if (t < 46) placeCrew([[5.0, 0.8, 5.25, 3.14], [5.0, 4.8, 1.0, 0], [5.0, 4.8, 3.9, 0], [5.0, 0.06, 1.3, 1.57, -1.3], [5.0, 0.06, 3.7, 1.57, -1.3]]);
+  else placeCrew([[3.0, 0, 6.8, 0.2], [6.5, 0, 6.9, -0.2]]);
+  if (t >= 24 && t < 30) spray([V(5.3, 1.6, 4.9), V(5.3, 1.3, 0.1), V(5.4, 4.85, 3.4)], t);
+  if (t >= 30 && t < 37) { // jacks at the far end
+    spray([V(10.2, 0.85, 1.4)], t, 0.0001); sparks.visible = false;
+  }
+  if (t >= 37 && t < 46) {
+    const k = seg(t, 37.5, 45.5);
+    const pts = [V(5.0, 0.85 + k * 3.9, 4.95), V(5.0, 4.85, 0.1 + k * 2.4), V(5.0, 0.82, 0.3 + k * 4.4)];
+    pts.forEach((p, i) => { glows[i].m.visible = true; glows[i].m.position.copy(p); glows[i].l.intensity = 6 + 4 * Math.sin(t * 40 + i); });
+    spray(pts, t, 0.35);
+    bead.visible = true; bead.scale.set(0.05, 0.05 + k * 3.9, 0.05); bead.position.set(5.0, 0.85 + k * 1.95, 4.97);
+  }
+  if (t >= 46) { bead.visible = true; bead.scale.set(0.05, 3.95, 0.05); bead.position.set(5.0, 2.8, 4.97); }
+  // captions
+  const P = 'A안 · 신규 사다리형 베이스 (총 11일)';
+  if (t < 4) setCap(P, '현장 현황', '개구부 쪽 35t(크레인 가까운 쪽) · 반대쪽 48t', 0, 11);
+  else if (t < 12) setCap(P, '베이스 제작·설치', '제작 기공 4명 · 하부 사다리 → 기둥 → 상부 사다리 (10×5m, H800)', 1 + Math.min(2, Math.floor((t - 4) / 2.67)), 11);
+  else if (t < 24) setCap(P, '회전·베이스 안착', '100t + 60t 탠덤 인양 · 도비 7명 · 안전관리자 · 간격 600 두고 안착', 4, 11);
+  else if (t < 30) setCap(P, '접합면 사상', '사상 기술자 2명 · 조공 2명', t < 27 ? 5 : 6, 11);
+  else if (t < 37) setCap(P, '용접면 밀착 이동', '유압잭으로 48t 쪽을 600 밀착 · 레일 상면 그리스/PTFE · 도비 7명', t < 33.5 ? 7 : 8, 11);
+  else if (t < 46) setCap(P, '접합부 용접 (상부·측면·하부 통로)', '용접사 3명 · 고급기술자 2명 · 화기감시', t < 40 ? 9 : t < 43 ? 10 : 11, 11);
+  else setCap(P, '완료', '하부는 베이스 통로(순높이 550)에서 용접 · 회전 없이 마무리', 99, 11);
+  camKey([
+    [0, [18, 10, 26], [5, 1, -2], 42], [4, [13, 5, 15], [5, 0.5, 2.5], 38],
+    [11, [-3, 6, 14], [5, 0.5, 2.5], 38], [12, [22, 16, 36], [4, 3, -1], 44],
+    [24, [14, 13, 34], [5, 2.5, 0], 44], [25, [9.5, 4.5, 13.5], [5.0, 2.4, 2.5], 38],
+    [30, [15, 5, 14], [7.5, 1.6, 2.5], 40], [37, [15.5, 5.5, 13], [7.5, 1.6, 2.5], 40],
+    [38, [9.5, 4, 12.5], [5.0, 2.4, 2.5], 36], [44, [8.5, 0.9, 10.5], [5.0, 0.5, 2.5], 42],
+    [46, [9, 1.2, 11], [5.0, 1.2, 2.5], 40], [50, [20, 9, 22], [5, 2, 2.5], 40]], t);;
+  tag(tagL, pL.outer, t < 46 ? '35t (개구부)' : '', 4.6); tag(tagR, pR.outer, t < 46 ? '48t' : '', 4.6);
+}
+
+function frameB(t) {
+  // 0-4 site | 4-10 jig modification | 10-22 lift & set | 22-28 grind+weld top/sides | 28-32 pipe removal | 32-41 90° turn (200t) | 41-48 bottom weld | 48-52 done
+  TOTAL = 52;
+  for (const o of Object.values(baseA)) o.visible = false;
+  jig.old.visible = true; jig.add.visible = t > 5; jig.add.position.y = 1.0 * (1 - seg(t, 5, 8)); crib.visible = t > 26;
+  sparks.visible = false; glows.forEach(g => { g.m.visible = false; g.l.intensity = 0; }); bead.visible = false;
+  const yawStart = Math.PI / 2;
+  const LAND_L = V(5.0, 0.6, 2.5), LAND_R = V(5.0, 0.6, 2.5);
+  const cranesOn = t > 9 && t < 22.5; crane100.show(cranesOn); crane60.show(cranesOn);
+  const c200 = t > 30 && t < 42.5; crane200.show(c200);
+  // pieces live in 'assembly' whose origin is the front-bottom edge (turn pivot)
+  const pivotZ = (2.5 + PW / 2 * S), pivotY = 0.6, off = V(0, pivotY, pivotZ);
+  if (pL.outer.parent !== assembly) { assembly.add(pL.outer); assembly.add(pR.outer); }
+  const setB = (p, pos, yaw) => setPiece(p, pos.clone().sub(off), yaw);
+  const k = seg(t, 33, 40);
+  assembly.position.set(0, pivotY - k * (pivotY - 0.48), pivotZ); assembly.rotation.set(k * Math.PI / 2, 0, 0);
+  const lift = (p, a, b, from, to) => { liftPose(p, t, a, b, from.clone().sub(off), to.clone().sub(off), yawStart, 0, 6.8 - pivotY); };
+  if (t < 10) { setB(pL, START_L, yawStart); setB(pR, START_R, yawStart); }
+  else if (t < 16) { lift(pL, 10, 16, START_L, LAND_L); setB(pR, START_R, yawStart); }
+  else if (t < 22) { setB(pL, LAND_L, 0); lift(pR, 16, 22, START_R, LAND_R); }
+  else { setB(pL, LAND_L, 0); setB(pR, LAND_R, 0); }
+  pL.pipes.visible = pR.pipes.visible = !(t > 30);
+  if (cranesOn) {
+    const active = t < 16 ? pL : pR;
+    const c = active.outer.getWorldPosition(new THREE.Vector3()); const cy = c.y; c.x += active === pL ? -2.2 : 2.2; c.y = 0;
+    crane100.aim(c.clone().add(V(active === pL ? -0.9 : 0.9, 0, 0)), cy + PH * S + 3.2, slingPts(active));
+    crane60.aim(c.clone().add(V(active === pL ? 0.9 : -0.9, 0, 0)), cy + PH * S + 3.6, []);
+  }
+  if (c200) {
+    // lift point on the back-top edge, which travels over the pivot as the unit turns
+    const r = Math.hypot(PH * S, PW * S); const a0 = Math.atan2(PH * S, -PW * S);   // back-top edge relative to pivot (y,z)
+    const a = a0 - k * Math.PI / 2;
+    const pz = pivotZ + r * Math.cos(a), py = pivotY + r * Math.sin(a);
+    const pts = [V(1.2, py, pz), V(3.4, py, pz), V(6.6, py, pz), V(8.8, py, pz)];
+    crane200.aim(V(5.0, 0, pz), Math.max(py + 4.0, 6.5), pts);
+  }
+  // workers
+  if (t < 4) placeCrew([]);
+  else if (t < 10) placeCrew([[1.0, 0, 6.0, 0.4], [5.0, 0, 6.2, -0.2], [9.0, 0, 6.0, 0.6], [9.8, 0, 1.0, -1.2]]);
+  else if (t < 22) placeCrew([[0.5, 0, 7.4, 0.7], [11.5, 0, 7.6, -0.6], [3.2, 0, 8.2, 0.2], [8.0, 0, 8.0, -0.1], [6.2, 0, 9.4, 0.0], [-0.8, 0, 3.0, 1.2], [12.2, 0, 2.2, -1.2]]);
+  else if (t < 28) placeCrew([[5.3, 0, 5.4, -1.4], [5.3, 4.6, 3.6, -1.5], [5.3, 4.6, 1.2, -1.5], [4.7, 0, 5.4, 1.4]]);
+  else if (t < 32) placeCrew([[2.2, 0, 5.6, 3.14], [7.5, 0, 5.6, 3.14], [4.5, 0, 6.2, 3.14]]);
+  else if (t < 41) placeCrew([[-2.5, 0, 6.0, 1.2], [12.5, 0, 6.0, -1.2], [5.0, 0, 13.0, 3.1], [1.0, 0, -1.5, 0.6]]);
+  else if (t < 48) placeCrew([[5.0, 0.6, 4.4, 0], [4.3, 0.6, 4.3, 0.4], [5.7, 0.6, 4.3, -0.4], [2.0, 0.6, 3.9, 0.2], [8.0, 0.6, 3.9, -0.2]]);
+  else placeCrew([[2.5, 0, 0.8, 0.2], [7.5, 0, 0.8, -0.2]]);
+  if (t >= 22 && t < 28) {
+    const k = seg(t, 22.5, 27.5);
+    const pts = [V(5.0, 0.7 + k * 3.8, 4.95), V(5.0, 4.65, 0.2 + k * 4.4)];
+    pts.forEach((p, i) => { glows[i].m.visible = true; glows[i].m.position.copy(p); glows[i].l.intensity = 6 + 4 * Math.sin(t * 40 + i); });
+    spray(pts, t, 0.35);
+  }
+  if (t >= 41 && t < 48) {
+    const k = seg(t, 41.5, 47.5);
+    const pts = [V(5.0, 0.7 + k * 4.4, pivotZ - 0.05), V(5.0, 5.2 - k * 2.0, pivotZ - 0.05)];
+    pts.forEach((p, i) => { glows[i].m.visible = true; glows[i].m.position.copy(p); glows[i].l.intensity = 6 + 4 * Math.sin(t * 40 + i); });
+    spray(pts, t, 0.35);
+  }
+  const P = 'B안 · 기존 조방(7×3m) 개조 + 90° 회전 (총 공정 별도 산정)';
+  if (t < 4) setCap(P, '현장 현황', '개구부 쪽 35t(크레인 가까운 쪽) · 반대쪽 48t', 0, 0);
+  else if (t < 10) setCap(P, '기존 조방 개조', '7×3m 조방에 외곽 보강보(주황) 추가 · 회전 착지용 깔목 준비', 0, 0);
+  else if (t < 22) setCap(P, '회전·조방 안착', '100t + 60t 탠덤 인양 · 도비 · 바로 맞대어 안착', 0, 0);
+  else if (t < 28) setCap(P, '사상 · 상부·측면 용접', '하부 접합선은 조방에 가려 이 단계에서 용접 불가', 0, 0);
+  else if (t < 32) setCap(P, '바닥 접촉면 배관 제거', '90° 회전 시 바닥에 닿는 면의 배관·노즐 제거', 0, 0);
+  else if (t < 41) setCap(P, '전체 90° 회전 (약 83t)', '150~200t 크레인 1회 동원 · 앞쪽 하단 모서리 기준 회전 · 깔목 위 착지', 0, 0);
+  else if (t < 48) setCap(P, '하부 접합부 용접', '세워진 하부면을 지상에서 용접 · 용접사 3명 · 고급기술자 2명', 0, 0);
+  else setCap(P, '완료', '복귀 회전·배관 복구 필요 여부는 발주처 확인', 0, 0);
+  daysEl.style.display = 'none';
+  camKey([
+    [0, [18, 10, 26], [5, 1, -2], 42], [4, [13, 5, 15], [5, 0.5, 2.5], 38],
+    [9, [-3, 6, 14], [5, 0.5, 2.5], 38], [10, [22, 16, 36], [4, 3, -1], 44],
+    [22, [14, 13, 34], [5, 2.5, 0], 44], [23, [10, 5.0, 13.5], [5.0, 2.4, 2.5], 38],
+    [28, [10, 3.0, 13], [5.0, 1.8, 4.9], 38], [32, [26, 13, 32], [6, 3, 5], 44],
+    [41, [24, 12, 30], [6, 3, 5], 44], [42, [10, 4.5, -7], [5, 2.6, 4.9], 40],
+    [48, [11, 4.0, -8], [5, 2.6, 4.9], 40], [52, [-8, 9, -12], [5, 2, 5], 42]], t);;
+  tag(tagL, pL.outer, t < 30 ? '35t (개구부)' : '', 4.6); tag(tagR, pR.outer, t < 30 ? '48t' : '', 4.6);
+  if (t >= 32) { tag(tagL, assembly, t < 48 ? '약 83t 일체' : '', 5.2); tag(tagR, assembly, '', 0); }
+}
+scene.traverse(o => { if (o.isMesh && o.material && o.material.envMapIntensity !== undefined) o.material.envMapIntensity = 0.45; });
+window.renderAt = (t) => { (PLAN === 'B' ? frameB : frameA)(t); renderer.render(scene, camera); return TOTAL; };
+window.renderAt(0);
+window.__ready = true;
+</script></body></html>
