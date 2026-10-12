@@ -12,7 +12,8 @@ let times;
 if (mode.startsWith('list:')) times = mode.slice(5).split(',').map(Number);
 else { const total = await page.evaluate(() => window.renderAt(0)); const fps = +mode; times = []; for (let i = 0; i <= total * fps; i++) times.push(i / fps); }
 const t0 = Date.now();
-for (let i = 0; i < times.length; i++) {
+const START = +(process.env.START || 0), END = +(process.env.END || 1e9);
+for (let i = START; i < Math.min(times.length, END); i++) {
   await page.evaluate(t => window.renderAt(t), times[i]);
   await page.screenshot({ path: `${out}/f_${String(i).padStart(5, '0')}.png` });
   if (i % 50 === 0) console.log(i, '/', times.length, ((Date.now() - t0) / 1000).toFixed(0) + 's');
