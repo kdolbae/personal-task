@@ -64,11 +64,12 @@ cover.title = "견적서"
 def header(ws, title_work, sub=None):
     ws.merge_cells("A1:I2"); ws["A1"] = "견      적      서"
     ws["A1"].font = font(True, 23); ws["A1"].alignment = CEN
-    ws.merge_cells("A4:C4"); ws["A4"] = " 금강변압기 귀하"; ws["A4"].font = font(True, 15)
+    ws.merge_cells("A4:C4"); ws["A4"] = " 금강변압기 유한회사 귀하"; ws["A4"].font = font(True, 15)
     ws.merge_cells("A5:C5"); ws["A5"] = "   담당자 :"; ws["A5"].font = font()
     ws.merge_cells("G4:I4"); ws["G4"] = "엔엠솔루션"; ws["G4"].font = font(True, 15); ws["G4"].alignment = CEN
     ws.merge_cells("G5:I5"); ws["G5"] = "대표 / 연락처 :"; ws["G5"].font = font(); ws["G5"].fill = YEL
     ws["A6"] = "   견적일 : 2026-10-12"; ws["A6"].font = font()
+    ws.merge_cells("A7:I7"); ws["A7"] = "   공사 장소 : 경기 화성시 마도면 마도공단로1길 214 금강변압기 유한회사(KUMKANG TRANSFORMER) 마당"; ws["A7"].font = font()
     ws.merge_cells("A8:I8"); ws["A8"] = "  작업 내용: " + title_work; ws["A8"].font = font(True, 12); ws["A8"].alignment = LEFT
     if sub:
         ws.merge_cells("A9:I9"); ws["A9"] = "  " + sub; ws["A9"].font = font(sz=10, color="555555")
@@ -154,7 +155,7 @@ def detail(name, rows, work):
     ws.sheet_view.showGridLines = False
     return f"'{name}'!H{tot}" if " " in name else f"{name}!H{tot}"
 
-WORK = "금강변압기 마당 진공건조로 2분할체(35TON 개구부 측, 48TON) 회전·안착, 베이스 제작, 접합부 사상·용접"
+WORK = "금강변압기 유한회사 마당 진공건조로 2분할체(35TON 개구부 측, 48TON) 회전·안착, 베이스 제작, 접합부 사상·용접"
 header(cover, WORK, "공기: 총 11일 (베이스 3일 → 안착 1일 → 사상 2일 → 밀착 이동 2일 → 용접 3일)")
 refs = {}
 refs["도비"] = detail("도비", DOBI, "진공건조로 2기 회전·베이스 안착(1일) 및 용접면 밀착 이동(2일)")

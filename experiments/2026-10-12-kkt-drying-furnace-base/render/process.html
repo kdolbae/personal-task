@@ -52,7 +52,7 @@ sunLight.position.copy(sun).multiplyScalar(45).add(new THREE.Vector3(5, 0, 4));
 sunLight.target.position.set(5, 0, 4);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.set(2048, 2048);
-const sc = sunLight.shadow.camera; sc.left = -20; sc.right = 20; sc.top = 20; sc.bottom = -20; sc.near = 1; sc.far = 140;
+const sc = sunLight.shadow.camera; sc.left = -26; sc.right = 26; sc.top = 26; sc.bottom = -26; sc.near = 1; sc.far = 140;
 sunLight.shadow.bias = -0.0004; sunLight.shadow.normalBias = 0.03;
 scene.add(sunLight, sunLight.target);
 scene.add(new THREE.HemisphereLight(0xdfe6ee, 0x5d5a52, 0.55));
@@ -101,14 +101,47 @@ function box(x0, x1, y0, y1, z0, z1, mat, parent = scene) {   // mm: x length, y
 function ibeamX(x0, x1, yc, z0, z1, b, tf, tw, mat, p) { box(x0, x1, yc - b / 2, yc + b / 2, z0, z0 + tf, mat, p); box(x0, x1, yc - b / 2, yc + b / 2, z1 - tf, z1, mat, p); box(x0, x1, yc - tw / 2, yc + tw / 2, z0 + tf, z1 - tf, mat, p); }
 function ibeamY(xc, y0, y1, z0, z1, b, tf, tw, mat, p) { box(xc - b / 2, xc + b / 2, y0, y1, z0, z0 + tf, mat, p); box(xc - b / 2, xc + b / 2, y0, y1, z1 - tf, z1, mat, p); box(xc - tw / 2, xc + tw / 2, y0, y1, z0 + tf, z1 - tf, mat, p); }
 
-// ---------------- background: wall + 30t gantry ----------------
-box(-120000, 140000, -27000, -26500, 0, 11000, M(0xb4b8bb, 0.85, 0.15, noiseTex(256, '#a9adb0', 14, 0.01, 20, 31)));
-const matBand = M(0x4a74c0, 0.6, 0.2);
-box(-120000, 140000, -26500, -26480, 6200, 7400, matBand); box(-120000, 140000, -26500, -26480, 3600, 4200, matBand);
-const gx = -4500;
-for (const gz of [-4000, 9000]) { box(gx - 350, gx + 350, gz - 300, gz + 300, 0, 9200, matYellow); box(gx - 350, gx + 350, gz - 1000, gz + 1000, 0, 500, matYellow); }
-box(gx - 450, gx + 450, -4300, 9300, 8800, 9800, matYellow);
-
+// ---------------- site: 금강변압기 마당 (항공사진 기준 배치, 개략) ----------------
+// x = east, plan y = south. Base sits east of the 30t gantry; factory to the north, trees + road to the south.
+const matWallF = M(0xc3c7ca, 0.85, 0.15, noiseTex(256, '#b7bbbe', 14, 0.01, 30, 31));
+const matRoof = M(0x4f8fd6, 0.6, 0.3, noiseTex(256, '#4a86c9', 18, 0.02, 30, 33));
+const matWhite = M(0xe7e7e3, 0.8, 0.1), matRed = M(0xd9675e, 0.7, 0.1), matGreenRoof = M(0x58b98a, 0.8, 0.05);
+const matConc = M(0x8f8f8a, 0.9, 0.05, noiseTex(512, '#8a8a85', 30, 0.02, 30, 35));
+const matRoad = M(0x3a3b3d, 0.95, 0.0, noiseTex(512, '#38393b', 40, 0.03, 40, 37));
+const matLeaf = M(0x3d7a35, 0.9, 0.0, noiseTex(256, '#3a7232', 40, 0.05, 2, 39)), matTrunk = M(0x5b4632, 0.9, 0);
+const matDark = M(0x2a2d31, 0.7, 0.2), matTote = M(0xeeeeea, 0.6, 0.1);
+// factory building (north)
+box(-70000, 70000, -42000, -16000, 0, 11000, matWallF);
+box(-70000, 70000, -42000, -15600, 11000, 11500, matRoof);
+for (let x = -36000; x <= 30000; x += 12000) box(x, x + 5000, -16020, -16000, 0, 5500, matDark);   // shutter doors
+for (let x = -40000; x < -18000; x += 1500) box(x, x + 1200, -15200, -14000, 0, 1200, matTote);     // IBC totes along the wall
+for (let x = 3000; x < 22000; x += 2600) box(x, x + 1800, -15400, -13800, 0, 1300, matDark);   // racks / bins
+// office building (west) with red roof wing
+box(-50000, -32000, -6000, 15000, 0, 8000, matWhite);
+box(-36000, -31000, -5000, 14000, 8000, 8400, matRed);
+// east building + parking apron
+box(30000, 60000, -16000, 17000, 0, 30, matConc);
+box(46000, 60000, -8000, 14000, 0, 9000, matWhite); box(46000, 60000, -8000, 14000, 9000, 9300, matGreenRoof);
+for (let i = 0; i < 4; i++) box(32000, 36600, 2000 + i * 2600, 2000 + i * 2600 + 1900, 0, 1500, i % 2 ? matWhite : matDark);   // parked cars
+// south: sidewalk, tree row, road with parked cars
+box(-70000, 70000, 17000, 19500, 0, 150, matConc);
+box(-70000, 70000, 19500, 34000, 0, 20, matRoad);
+for (let x = -66000; x <= 66000; x += 12000) box(x, x + 3000, 26700, 26850, 20, 30, matWhite);
+for (let x = -60000; x <= 60000; x += 7000) {
+  const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 3, 8), matTrunk); tr.position.set(x * S, 1.5, 18.3); scene.add(tr);
+  for (const [dx, dy, r] of [[0, 4.6, 2.6], [1.2, 5.6, 1.9], [-1.1, 5.4, 2.0]]) {
+    const lf = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), matLeaf); lf.position.set(x * S + dx, dy, 18.3 + (dx * 0.3)); scene.add(lf);
+  }
+}
+for (let x = -58000; x <= 58000; x += 9000) box(x, x + 4600, 20200, 22000, 20, 1500, (x / 9000) % 2 ? matWhite : matDark);
+// 30t gantry crane, girders running north-south across the yard, west of the work area
+const gx0 = -17000, gx1 = -13000;
+for (const gxx of [gx0, gx1]) {
+  box(gxx - 300, gxx + 300, -15000, 16500, 8600, 9800, matYellow);
+  for (const gy of [-14500, 16000]) box(gxx - 350, gxx + 350, gy - 350, gy + 350, 0, 8600, matYellow);
+}
+for (const gy of [-14500, 16000]) { box(gx0, gx1, gy - 300, gy + 300, 8200, 9000, matYellow); box(gx0 - 900, gx1 + 900, gy - 600, gy + 600, 0, 500, matYellow); }
+box(gx0 + 300, gx1 - 300, -1500, 1500, 7400, 8600, M(0x3c78c8, 0.6, 0.2));   // blue cab
 // ---------------- plan A base: ladder + columns + ladder ----------------
 const baseA = { bot: new THREE.Group(), col: new THREE.Group(), top: new THREE.Group() };
 scene.add(baseA.bot, baseA.col, baseA.top);
@@ -235,9 +268,9 @@ function mobileCrane(boomLen, mat, scaleK = 1) {
 const crane100 = mobileCrane(38, M(0xe9e6df, 0.5, 0.4));
 const crane60 = mobileCrane(34, M(0xd8d2c4, 0.5, 0.4), 0.85);
 const crane200 = mobileCrane(40, M(0xdedad1, 0.5, 0.4), 1.15);
-crane100.g.position.set(4.5, 0, 17.5); crane100.g.rotation.y = 0.05;
-crane60.g.position.set(-2.0, 0, 15.0); crane60.g.rotation.y = 0.35;
-crane200.g.position.set(8.0, 0, 21.0); crane200.g.rotation.y = -0.12;
+crane100.g.position.set(8.5, 0, 12.0); crane100.g.rotation.y = 0.0;
+crane60.g.position.set(-3.5, 0, 12.5); crane60.g.rotation.y = 0.0;
+crane200.g.position.set(5.0, 0, 13.0); crane200.g.rotation.y = 0.0;
 
 // ---------------- sparks / weld glow ----------------
 const SP = 260;
@@ -283,7 +316,7 @@ function tag(el, obj, txt, dy = 4.6) {
   el.style.display = 'block'; el.textContent = txt; el.style.left = ((p.x + 1) / 2 * W) + 'px'; el.style.top = ((1 - p.y) / 2 * H) + 'px'; el.style.fontSize = (22 * scale) + 'px';
 }
 // joint at x = 5.0 m, furnace centre line z = 2.5 m. Start positions: lying in the yard in front of the base.
-const START_L = V(1.2, 0, -8.5), START_R = V(9.8, 0, -8.5);
+const START_L = V(-9.0, 0, 2.5), START_R = V(-3.0, 0, 2.5);   // 35t next to the gantry, 48t further east
 function setPiece(p, pos, yaw = 0) { p.outer.position.copy(pos); p.outer.rotation.set(0, yaw, 0); }
 function slingPts(p) {
   p.outer.updateMatrixWorld(true);
@@ -346,7 +379,7 @@ function frameA(t) {
   }
   if (t >= 46) { bead.visible = true; bead.scale.set(0.05, 3.95, 0.05); bead.position.set(5.0, 2.8, 4.97); }
   // captions
-  const P = 'A안 · 신규 사다리형 베이스 (총 11일)';
+  const P = '금강변압기 유한회사 마당 · A안 신규 사다리형 베이스 (총 11일)';
   if (t < 4) setCap(P, '현장 현황', '개구부 쪽 35t(크레인 가까운 쪽) · 반대쪽 48t', 0, 11);
   else if (t < 12) setCap(P, '베이스 제작·설치', '제작 기공 4명 · 하부 사다리 → 기둥 → 상부 사다리 (10×5m, H800)', 1 + Math.min(2, Math.floor((t - 4) / 2.67)), 11);
   else if (t < 24) setCap(P, '회전·베이스 안착', '100t + 60t 탠덤 인양 · 도비 7명 · 안전관리자 · 간격 600 두고 안착', 4, 11);
@@ -355,12 +388,12 @@ function frameA(t) {
   else if (t < 46) setCap(P, '접합부 용접 (상부·측면·하부 통로)', '용접사 3명 · 고급기술자 2명 · 화기감시', t < 40 ? 9 : t < 43 ? 10 : 11, 11);
   else setCap(P, '완료', '하부는 베이스 통로(순높이 550)에서 용접 · 회전 없이 마무리', 99, 11);
   camKey([
-    [0, [18, 10, 26], [5, 1, -2], 42], [4, [13, 5, 15], [5, 0.5, 2.5], 38],
-    [11, [-3, 6, 14], [5, 0.5, 2.5], 38], [12, [22, 16, 36], [4, 3, -1], 44],
-    [24, [14, 13, 34], [5, 2.5, 0], 44], [25, [9.5, 4.5, 13.5], [5.0, 2.4, 2.5], 38],
+    [0, [-4, 52, 40], [0, 0, 0], 42], [4, [13, 6, 15], [3, 0.5, 2.5], 40],
+    [11, [-3, 6, 14], [5, 0.5, 2.5], 38], [12, [25, 19, 3], [1, 2.5, 3], 50],
+    [24, [24, 17, 1], [3, 2.5, 3], 48], [25, [9.5, 4.5, 13.5], [5.0, 2.4, 2.5], 38],
     [30, [15, 5, 14], [7.5, 1.6, 2.5], 40], [37, [15.5, 5.5, 13], [7.5, 1.6, 2.5], 40],
     [38, [9.5, 4, 12.5], [5.0, 2.4, 2.5], 36], [44, [8.5, 0.9, 10.5], [5.0, 0.5, 2.5], 42],
-    [46, [9, 1.2, 11], [5.0, 1.2, 2.5], 40], [50, [20, 9, 22], [5, 2, 2.5], 40]], t);;
+    [46, [9, 1.2, 11], [5.0, 1.2, 2.5], 40], [50, [16, 16, 16], [3, 2, 2.5], 42]], t);;
   tag(tagL, pL.outer, t < 46 ? '35t (개구부)' : '', 4.6); tag(tagR, pR.outer, t < 46 ? '48t' : '', 4.6);
 }
 
@@ -421,7 +454,7 @@ function frameB(t) {
     pts.forEach((p, i) => { glows[i].m.visible = true; glows[i].m.position.copy(p); glows[i].l.intensity = 6 + 4 * Math.sin(t * 40 + i); });
     spray(pts, t, 0.35);
   }
-  const P = 'B안 · 기존 조방(7×3m) 개조 + 90° 회전 (총 공정 별도 산정)';
+  const P = '금강변압기 유한회사 마당 · B안 기존 조방(7×3m) 개조 + 90° 회전';
   if (t < 4) setCap(P, '현장 현황', '개구부 쪽 35t(크레인 가까운 쪽) · 반대쪽 48t', 0, 0);
   else if (t < 10) setCap(P, '기존 조방 개조', '7×3m 조방에 외곽 보강보(주황) 추가 · 회전 착지용 깔목 준비', 0, 0);
   else if (t < 22) setCap(P, '회전·조방 안착', '100t + 60t 탠덤 인양 · 도비 · 바로 맞대어 안착', 0, 0);
@@ -432,11 +465,11 @@ function frameB(t) {
   else setCap(P, '완료', '복귀 회전·배관 복구 필요 여부는 발주처 확인', 0, 0);
   daysEl.style.display = 'none';
   camKey([
-    [0, [18, 10, 26], [5, 1, -2], 42], [4, [13, 5, 15], [5, 0.5, 2.5], 38],
-    [9, [-3, 6, 14], [5, 0.5, 2.5], 38], [10, [22, 16, 36], [4, 3, -1], 44],
-    [22, [14, 13, 34], [5, 2.5, 0], 44], [23, [10, 5.0, 13.5], [5.0, 2.4, 2.5], 38],
-    [28, [10, 3.0, 13], [5.0, 1.8, 4.9], 38], [32, [26, 13, 32], [6, 3, 5], 44],
-    [41, [24, 12, 30], [6, 3, 5], 44], [42, [10, 4.5, -7], [5, 2.6, 4.9], 40],
+    [0, [-4, 52, 40], [0, 0, 0], 42], [4, [13, 6, 15], [3, 0.5, 2.5], 40],
+    [9, [-3, 6, 14], [5, 0.5, 2.5], 38], [10, [25, 19, 3], [1, 2.5, 3], 50],
+    [22, [24, 17, 1], [3, 2.5, 3], 48], [23, [10, 5.0, 13.5], [5.0, 2.4, 2.5], 38],
+    [28, [10, 3.0, 13], [5.0, 1.8, 4.9], 38], [32, [25, 17, -1], [4, 3, 5], 50],
+    [41, [24, 15, -2], [4, 3, 5], 50], [42, [10, 4.5, -7], [5, 2.6, 4.9], 40],
     [48, [11, 4.0, -8], [5, 2.6, 4.9], 40], [52, [-8, 9, -12], [5, 2, 5], 42]], t);;
   tag(tagL, pL.outer, t < 30 ? '35t (개구부)' : '', 4.6); tag(tagR, pR.outer, t < 30 ? '48t' : '', 4.6);
   if (t >= 32) { tag(tagL, assembly, t < 48 ? '약 83t 일체' : '', 5.2); tag(tagR, assembly, '', 0); }
