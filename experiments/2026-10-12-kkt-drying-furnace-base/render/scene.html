@@ -1,0 +1,198 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { Sky } from 'three/addons/objects/Sky.js';
+
+const q = new URLSearchParams(location.search);
+const view = q.get('view') || '1';
+const withUnits = q.get('units') === '1';
+const W = 1920, H = 1080;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.78;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+
+// ---------- sky + environment ----------
+const sky = new Sky(); sky.scale.setScalar(450000); scene.add(sky);
+const sun = new THREE.Vector3();
+const elev = 42, azim = 52;
+sun.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - elev), THREE.MathUtils.degToRad(azim));
+const u = sky.material.uniforms;
+u.turbidity.value = 2.2; u.rayleigh.value = 2.4; u.mieCoefficient.value = 0.004; u.mieDirectionalG.value = 0.8;
+u.sunPosition.value.copy(sun);
+const pm = new THREE.PMREMGenerator(renderer);
+const envScene = new THREE.Scene(); envScene.add(sky.clone());
+scene.environment = pm.fromScene(sky, 0.02).texture;
+
+const sunLight = new THREE.DirectionalLight(0xfff1de, 3.4);
+sunLight.position.copy(sun).multiplyScalar(40).add(new THREE.Vector3(5, 0, 2.5));
+sunLight.target.position.set(5, 0, 2.5);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(4096, 4096);
+const sc = sunLight.shadow.camera; sc.left = -14; sc.right = 14; sc.top = 14; sc.bottom = -14; sc.near = 1; sc.far = 120;
+sunLight.shadow.bias = -0.0004; sunLight.shadow.normalBias = 0.02;
+scene.add(sunLight, sunLight.target);
+scene.add(new THREE.HemisphereLight(0xdfe6ee, 0x5d5a52, 0.55));
+scene.fog = new THREE.Fog(0xc9d3de, 45, 150);
+
+// ---------- procedural textures ----------
+function noiseTex(size, base, vari, speck, rep, seed = 1) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, size, size);
+  let s = seed; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const img = g.getImageData(0, 0, size, size);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = (rnd() - 0.5) * vari + (rnd() < speck ? (rnd() - 0.5) * vari * 3 : 0);
+    img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+function stains(tex, n, seed) {
+  const g = tex.image.getContext('2d'); let s = seed; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < n; i++) {
+    const x = rnd() * 1024, y = rnd() * 1024, r = 20 + rnd() * 90;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    const dark = rnd() < 0.5;
+    gr.addColorStop(0, dark ? 'rgba(20,20,20,0.18)' : 'rgba(160,160,160,0.07)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+  }
+  tex.needsUpdate = true; return tex;
+}
+
+// ---------- ground (asphalt) ----------
+const asphalt = stains(noiseTex(1024, '#4d4d4f', 70, 0.04, 40, 7), 18, 11);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80),
+  new THREE.MeshStandardMaterial({ map: asphalt, roughness: 0.96, metalness: 0.0, bumpMap: asphalt, bumpScale: 0.25 }));
+ground.rotation.x = -Math.PI / 2; ground.position.set(5, 0, 2.5); ground.receiveShadow = true; scene.add(ground);
+
+// ---------- materials ----------
+const primerTex = stains(noiseTex(512, '#5f3429', 30, 0.03, 3, 3), 14, 5);
+const matPrimer = new THREE.MeshStandardMaterial({ color: 0xffffff, map: primerTex, roughness: 0.62, metalness: 0.35, bumpMap: primerTex, bumpScale: 0.3 });
+const matBlue = new THREE.MeshStandardMaterial({ color: 0x8a96a3, map: noiseTex(512, '#6b7480', 30, 0.03, 3, 9), roughness: 0.5, metalness: 0.6 });
+const matColumn = new THREE.MeshStandardMaterial({ color: 0x9aa0a6, map: noiseTex(512, '#70767c', 26, 0.03, 3, 13), roughness: 0.5, metalness: 0.65 });
+const matWeld = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.7, metalness: 0.5 });
+const matUnit = new THREE.MeshStandardMaterial({ color: 0x8b9094, map: noiseTex(512, '#5f6468', 24, 0.02, 2, 21), roughness: 0.55, metalness: 0.45 });
+const matUnitDark = new THREE.MeshStandardMaterial({ color: 0x3d4146, roughness: 0.7, metalness: 0.3 });
+const matRust = new THREE.MeshStandardMaterial({ color: 0x7b5a45, roughness: 0.8, metalness: 0.3 });
+
+const S = 0.001;
+function box(x0, x1, y0, y1, z0, z1, mat, parent = scene) {   // mm: x length, y plan(width), z height  -> three (x, height, depth)
+  const m = new THREE.Mesh(new THREE.BoxGeometry((x1 - x0) * S, (z1 - z0) * S, (y1 - y0) * S), mat);
+  m.position.set((x0 + x1) / 2 * S, (z0 + z1) / 2 * S, (y0 + y1) / 2 * S);
+  m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+function ibeamX(x0, x1, yc, z0, z1, b, tf, tw, mat) {
+  box(x0, x1, yc - b / 2, yc + b / 2, z0, z0 + tf, mat);
+  box(x0, x1, yc - b / 2, yc + b / 2, z1 - tf, z1, mat);
+  box(x0, x1, yc - tw / 2, yc + tw / 2, z0 + tf, z1 - tf, mat);
+}
+function ibeamY(xc, y0, y1, z0, z1, b, tf, tw, mat) {
+  box(xc - b / 2, xc + b / 2, y0, y1, z0, z0 + tf, mat);
+  box(xc - b / 2, xc + b / 2, y0, y1, z1 - tf, z1, mat);
+  box(xc - tw / 2, xc + tw / 2, y0, y1, z0 + tf, z1 - tf, mat);
+}
+
+// ---------- base (ladder + columns + ladder) ----------
+const L = 10000, Wd = 5000, Ht = 800;
+const RAIL_Y = [300, 1400, 3600, 4700], STA = [150, 2400, 4625, 5375, 7600, 9850];
+const LANE = [4700, 5300];
+for (const yc of RAIL_Y) {
+  ibeamX(0, L, yc, 550, 800, 125, 9, 6, matPrimer);                           // top rails
+  ibeamX(0, LANE[0], yc, 0, 200, 100, 8, 5.5, matPrimer);                     // bottom rails (split at lane)
+  ibeamX(LANE[1], L, yc, 0, 200, 100, 8, 5.5, matPrimer);
+}
+for (const xc of STA) {
+  for (let k = 0; k < 3; k++) {
+    const y0 = RAIL_Y[k] + 62.5, y1 = RAIL_Y[k + 1] - 62.5;
+    ibeamY(xc, y0, y1, 650, 800, 75, 7, 5, matPrimer);                         // top rungs (flush top)
+    ibeamY(xc, RAIL_Y[k] + 50, RAIL_Y[k + 1] - 50, 0, 150, 75, 7, 5, matPrimer);   // bottom rungs
+  }
+  for (const yc of RAIL_Y) {
+    box(xc - 62.5, xc + 62.5, yc - 62.5, yc + 62.5, 200, 550, matColumn);       // columns
+    // weld beads at column ends
+    box(xc - 70, xc + 70, yc - 70, yc + 70, 196, 204, matWeld);
+    box(xc - 70, xc + 70, yc - 70, yc + 70, 546, 554, matWeld);
+  }
+}
+// reaction brackets (removable)
+for (const yc of [1400, 3600]) box(20, 90, yc - 150, yc + 150, 800, 1100, matPrimer);
+
+// ---------- units (45t left, 38t right) ----------
+function unit(x0, x1, name) {
+  const g = new THREE.Group(); scene.add(g);
+  const y0 = 100, y1 = 4900, h0 = 800, tiers = 4, th = 1000;
+  // back wall + floor
+  box(x0, x1, y0, y0 + 12, h0, h0 + tiers * th, matUnitDark, g);
+  box(x0, x1, y0, y1, h0, h0 + 60, matUnit, g);
+  for (let t = 0; t <= tiers; t++) box(x0, x1, y0, y1, h0 + t * th - 40 + (t === 0 ? 40 : 0), h0 + t * th + 70, matUnit, g);
+  // vertical ribs (every ~550mm) and side walls
+  const n = Math.round((x1 - x0) / 550);
+  for (let i = 0; i <= n; i++) {
+    const x = x0 + (x1 - x0) * i / n;
+    box(x - 6, x + 6, y0, y1, h0, h0 + tiers * th, matUnit, g);
+  }
+  // front strap bars (outer rusty flat bars like the site photos)
+  const m = Math.round((x1 - x0) / 1100);
+  for (let i = 0; i <= m; i++) {
+    const x = x0 + 60 + (x1 - x0 - 120) * i / m;
+    box(x - 12, x + 12, y1 + 78, y1 + 90, h0 - 300, h0 + tiers * th + 500, i % 2 ? matRust : matUnit, g);
+  }
+  // nozzle flanges on the front side
+  const cyl = (x, hz, r, len, mat) => {
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(r * S, r * S, len * S, 32), mat);
+    c.rotation.x = Math.PI / 2; c.position.set(x * S, hz * S, (y1 + len / 2) * S); c.castShadow = true; g.add(c);
+    const f = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.45 * S, r * 1.45 * S, 30 * S, 32), mat);
+    f.rotation.x = Math.PI / 2; f.position.set(x * S, hz * S, (y1 + len) * S); f.castShadow = true; g.add(f);
+  };
+  cyl(x0 + (x1 - x0) * 0.72, h0 + 2.5 * th, 150, 300, matUnit);
+  cyl(x0 + (x1 - x0) * 0.30, h0 + 0.6 * th, 120, 260, matUnit);
+  return g;
+}
+if (withUnits) { unit(150, LANE[0] - 100, '45t'); unit(LANE[1] + 100, 9850, '38t'); }
+
+
+// ---------- background: factory wall + gantry crane ----------
+const matWall = new THREE.MeshStandardMaterial({ color: 0xb4b8bb, roughness: 0.85, metalness: 0.15, map: noiseTex(256, '#a9adb0', 14, 0.01, 20, 31) });
+const matBand = new THREE.MeshStandardMaterial({ color: 0x4a74c0, roughness: 0.6, metalness: 0.2 });
+const matYellow = new THREE.MeshStandardMaterial({ color: 0xd6a31c, roughness: 0.55, metalness: 0.4, map: noiseTex(256, '#b98a14', 20, 0.02, 4, 41) });
+box(-120000, 140000, -27000, -26500, 0, 11000, matWall);
+box(-120000, 140000, -26500, -26480, 6200, 7400, matBand);
+box(-120000, 140000, -26500, -26480, 3600, 4200, matBand);
+// gantry crane (A-frame legs + girder), spans across the width at x = -3.5 m
+const gx = -3500;
+for (const gz of [-3500, 8500]) {
+  box(gx - 350, gx + 350, gz - 300, gz + 300, 0, 9200, matYellow);
+  box(gx - 350, gx + 350, gz - 300 + (gz < 0 ? -700 : 700), gz + 300 + (gz < 0 ? -700 : 700), 0, 500, matYellow);
+}
+box(gx - 450, gx + 450, -3800, 8800, 8800, 9800, matYellow);
+box(gx - 460, gx + 460, -3800, 8800, 9150, 9250, matWeld);
+
+scene.traverse(o => { if (o.isMesh && o.material && o.material.envMapIntensity !== undefined) o.material.envMapIntensity = 0.45; });
+// ---------- camera ----------
+const cam = new THREE.PerspectiveCamera(36, W / H, 0.1, 500);
+const views = {
+  '1': { p: [-1.5, 3.2, 12.5], t: [5.2, 0.35, 2.4], fov: 34 },     // base hero
+  '2': { p: [7.6, 0.62, 7.4], t: [5.0, 0.4, 2.3], fov: 42 },      // lane close-up
+  '3': { p: [15.5, 6.0, 19.0], t: [5.0, 1.9, 2.5], fov: 34 },      // base + units
+  '4': { p: [10.2, 1.4, 7.5], t: [5.0, 0.7, 2.4], fov: 40 }
+};
+const v = views[view];
+cam.position.set(...v.p); cam.lookAt(...v.t); cam.fov = v.fov; cam.updateProjectionMatrix();
+renderer.render(scene, cam);
+window.__ready = true;
+</script></body></html>
