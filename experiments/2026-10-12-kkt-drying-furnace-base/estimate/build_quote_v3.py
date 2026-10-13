@@ -299,30 +299,32 @@ def page(ws, landscape=False):
     ws.oddFooter.right.text = f"&\"{FN}\"&8 &P / &N"
 
 
-# ---------------------------------------------------------------- 요율근거 (먼저 만들어 셀 주소 확보)
-rs = wb.create_sheet("요율근거")
-rs["A1"] = "요율 입력값"; rs["A1"].font = font(True, 14, C_NAVY)
-rs["A2"] = "요율·단가 칸은 입력값임. 변경 시 모든 공종 시트와 견적서가 다시 계산됨."; rs["A2"].font = font(sz=9, color="555555")
-for c, h in enumerate(["항목", "적용 기준", "요율", "출처·비고"], 1):
-    x = rs.cell(4, c, h); head_cell(x)
+# ---------------------------------------------------------------- 적용 요율 (원가계산서 하단 표, 먼저 만들어 셀 주소 확보)
+cs = wb.create_sheet("원가계산서", 1)
+RATE_ROW = 23   # 원가계산서 본표(6~18행)·주석(20행) 아래
+RATE_SRC = {"SAN": "2026년 고용노동부 보험료율 고시 (건설업)", "GOY": "2026년 고용노동부 보험료율 고시 (150인 미만)",
+            "SAFE": "고용노동부 산업안전보건관리비 계상기준", "GEN": "6% 이내 적용 (국가계약법 시행규칙 제8조 기준)"}
+cs.cell(RATE_ROW - 1, 1, "적용 요율").font = font(sz=11, sb=True)
+for c, h in ((1, "항목"), (2, "적용 기준"), (4, "요율"), (5, "근거")):
+    cs.cell(RATE_ROW, c, h)
+cs.merge_cells(start_row=RATE_ROW, start_column=2, end_row=RATE_ROW, end_column=3)
+cs.merge_cells(start_row=RATE_ROW, start_column=5, end_row=RATE_ROW, end_column=6)
+for c in range(1, 7): head_cell(cs.cell(RATE_ROW, c))
 RC = {}
-r = 5
-for key, nm, v, base, src in RATES:
-    rs.cell(r, 1, nm); rs.cell(r, 2, base); x = rs.cell(r, 3, v); x.font = font(color="0000FF"); x.number_format = "0.00%"
-    rs.cell(r, 4, src); RC[key] = f"요율근거!$C${r}"; r += 1
+r = RATE_ROW + 1
+for key, nm, v, base, _ in RATES + [("PROF", "이윤", PROFIT["도비"], "(노무비 + 경비 + 일반관리비) ×", None)]:
+    cs.cell(r, 1, nm); cs.cell(r, 2, base); x = cs.cell(r, 4, v); x.number_format = "0.00%"
+    cs.cell(r, 5, RATE_SRC.get(key, "15% 이내 적용 (국가계약법 시행규칙 제8조 기준)"))
+    cs.merge_cells(start_row=r, start_column=2, end_row=r, end_column=3)
+    cs.merge_cells(start_row=r, start_column=5, end_row=r, end_column=6)
+    RC[key] = f"원가계산서!$D${r}"
+    for c in range(1, 7):
+        x = cs.cell(r, c); x.border = BOX; x.font = font(sz=9 if c == 5 else 10); x.alignment = CEN if c == 4 else LEFT
+    cs.row_dimensions[r].height = 30
+    r += 1
+assert len(set(PROFIT.values())) == 1   # 이윤율은 전 공종 같은 값 한 칸
 for nm, _, _ in ALLWORKS:
-    rs.cell(r, 1, f"이윤 ({nm})"); rs.cell(r, 2, "(노무비 + 경비 + 일반관리비) ×")
-    x = rs.cell(r, 3, PROFIT[nm]); x.font = font(color="0000FF"); x.number_format = "0.0%"
-    rs.cell(r, 4, S_RULE + ". 15% 이내"); RC["P_" + nm] = f"요율근거!$C${r}"; r += 1
-border_range(rs, 4, r - 1, 1, 4)
-for rr in range(5, r):
-    for c in range(1, 5):
-        x = rs.cell(rr, c); x.alignment = LEFT if c in (1, 2, 4) else CEN
-        if x.font.name != FN: x.font = font()
-    rs.row_dimensions[rr].height = 30
-setw(rs, {"A": 22, "B": 26, "C": 14, "D": 60, "E": 10})
-page(rs, landscape=True)
-rs.sheet_state = "hidden"   # 공식이 참조하는 요율 입력 칸. 제출본에는 싣지 않음
+    RC["P_" + nm] = RC["PROF"]
 
 
 # ---------------------------------------------------------------- 공종 시트
@@ -414,7 +416,6 @@ for nm, rows, work in ALLWORKS:
     detail(nm, rows, work)
 
 # ---------------------------------------------------------------- 원가계산서
-cs = wb.create_sheet("원가계산서", 1)
 cs.merge_cells("A1:F2"); cs["A1"] = "공 사 원 가 계 산 서"; cs["A1"].font = font(True, 16, C_NAVY); cs["A1"].alignment = CEN
 cs.merge_cells("A3:F3"); cs["A3"] = "공사명 : 진공건조로 회전·안착 및 접합부 용접 공사   |   " + QNO; cs["A3"].font = font(sz=9, color="555555"); cs["A3"].alignment = CEN
 for c, h in enumerate(["비목", "도비", "용접", "베이스", "합계", "구성비"], 1):
@@ -445,7 +446,7 @@ for rr in (VATROW, GRAND):
         x = cs.cell(rr, c); x.border = BOX; x.font = font(rr == GRAND); x.alignment = CEN if c == 1 else RIGHT
         if c >= 2: x.number_format = WON
         if rr == GRAND: x.fill = NAVY; x.font = font(True, color="FFFFFF")
-cs.cell(GRAND + 2, 1, "요율: 산재 3.56%·고용 1.15% (노무비 기준), 산업안전보건관리비 3.11% ((재료비 + 노무비) 기준), 일반관리비 5% (순공사원가 기준), 이윤 15%. 보험료율은 2026년 고용노동부 고시, 산업안전보건관리비는 고용노동부 계상기준 적용함.").font = font(sz=9, color="555555")
+cs.cell(GRAND + 2, 1, "요율: 산재 3.56%·고용 1.15% (노무비 기준), 산업안전보건관리비 3.11% ((재료비 + 노무비) 기준), 일반관리비 5% (순공사원가 기준), 이윤 15%. 근거는 아래 적용 요율 표.").font = font(sz=9, color="555555")
 cs.merge_cells(start_row=GRAND + 2, start_column=1, end_row=GRAND + 2, end_column=6)
 cs.cell(GRAND + 2, 1).alignment = LEFT; cs.row_dimensions[GRAND + 2].height = 30
 setw(cs, {"A": 20, "B": 15, "C": 15, "D": 15, "E": 16, "F": 9})
@@ -706,7 +707,6 @@ for t in ["※ B안 200t급 크레인은 1일 임대 단가 적용, 회송·웨�
 setw(xs, {"A": 16, "B": 22, "C": 22, "D": 16, "E": 52})
 page(xs, landscape=True)
 
-wb.move_sheet("요율근거", offset=len(wb.sheetnames))
 wb.save(OUT)
 for n, _, _ in ALLWORKS:
     k = CALC[n]
