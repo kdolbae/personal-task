@@ -332,7 +332,7 @@ page(rs, landscape=True)
 def header(ws, work, ncol=9):
     last = "ABCDEFGHI"[ncol - 1]
     ws.merge_cells(f"A1:{last}2"); ws["A1"] = "공 종 별   내 역 서"; ws["A1"].font = font(True, 16, C_NAVY); ws["A1"].alignment = CEN
-    ws.merge_cells(f"A3:{last}3"); ws["A3"] = f"견적번호 {QNO}   |   견적일 {QDATE}   |   금강변압기 유한회사 귀중"
+    ws.merge_cells(f"A3:{last}3"); ws["A3"] = f"견적번호 {QNO}   |   견적일 {QDATE}   |   주식회사 금강변압기 귀중"
     ws["A3"].font = font(sz=9, color="555555"); ws["A3"].alignment = CEN
     ws.merge_cells(f"A5:{last}5"); ws["A5"] = "공 종 : " + work; ws["A5"].font = font(sz=12, sb=True); ws["A5"].alignment = LEFT
 
@@ -484,7 +484,7 @@ for cc in range(1, 10): c.cell(4, cc).border = Border(bottom=thin)
 c.row_dimensions[4].height = 8
 # 2. 수신 · 공급자 2단
 c.cell(5, 1, "수신").font = font(sz=12, sb=True); c.cell(5, 6, "공급자").font = font(sz=12, sb=True); c.row_dimensions[5].height = 22
-recv = [("업체명", "금강변압기 유한회사 (KUMKANG TRANSFORMER)"), ("담당자", ""), ("연락처", ""),
+recv = [("업체명", "주식회사 금강변압기"), ("담당자", ""), ("연락처", ""),
         ("현장 주소", "경기 화성시 마도면 마도공단로1길 214 (사내 마당)"), ("공사명", WORKNAME), ("", "")]
 supl = [("상호", f"{SUP['name']} ({SUP['en']})"), ("대표", SUP["ceo"]), ("주소", SUP["addr"]),
         ("전화", f"대표 {SUP['tel']}  /  직통 {SUP['mobile']}"), ("홈페이지", SUP["web"]), ("사업자등록번호", SUP["bizno"])]
