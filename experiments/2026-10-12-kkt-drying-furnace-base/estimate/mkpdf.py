@@ -9,13 +9,12 @@ SRC=sys.argv[1]; OUT=sys.argv[2]; W='/tmp/claude-0/-home-claude-personal-task/cc
 shutil.rmtree(W,ignore_errors=True); os.makedirs(W)
 DETAIL={"A":8,"B":16,"C":22,"D":7,"E":7,"F":11,"G":13,"H":22,"I":7}
 PRINT_W={"견적서":{"A":9,"B":13,"C":13,"D":22,"E":7,"F":6,"G":12,"H":15,"I":24},"AB비교":{"A":14,"B":20,"C":20,"D":15,"E":44},
-         "산출근거":{"A":6,"B":13,"C":20,"D":30,"E":12,"F":30,"G":14},
+         "산출근거":{"A":6,"B":13,"C":21,"D":31,"E":12,"F":41},
          "도비":DETAIL,"용접":DETAIL,"베이스":DETAIL,"B_도비":DETAIL,"B_용접":DETAIL,"B_조방":DETAIL,
-         "공정표":{"A":24,"B":26,"C":5.5,**{c:7 for c in "DEFGHIJKLMN"}},
-         "요율근거":{"A":18,"B":22,"C":12,"D":42,"E":8}}
-WRAP={"견적서":("B","D","I"),"AB비교":("B","C","E"),"산출근거":("B","C","D","F","G"),"요율근거":("A","B","C","D"),"공정표":("A","B"),
+         "공정표":{"A":24,"B":26,"C":5.5,**{c:7 for c in "DEFGHIJKLMN"}}}
+WRAP={"견적서":("B","D","I"),"AB비교":("B","C","E"),"산출근거":("B","C","D","F"),"공정표":("A","B"),
       **{k:("B","C","H") for k in ("도비","용접","베이스","B_도비","B_용접","B_조방")}}
-AUTOROW_FROM={"견적서":17,"산출근거":2,"요율근거":2,"AB비교":4,"공정표":4,**{k:8 for k in ("도비","용접","베이스","B_도비","B_용접","B_조방")}}
+AUTOROW_FROM={"견적서":17,"산출근거":2,"AB비교":4,"공정표":4,**{k:8 for k in ("도비","용접","베이스","B_도비","B_용접","B_조방")}}
 def layout(ws):
     # 인쇄용 레이아웃: 세로 A4 폭에 맞게 열 너비를 줄이고, 긴 글은 줄바꿈 + 행 높이 자동
     from copy import copy
@@ -27,7 +26,6 @@ def layout(ws):
     for row in ws.iter_rows(min_row=r0):
         for x in row:
             if getattr(x,"column_letter",None) in cols and isinstance(x.value,str) and len(x.value)>8:
-                if ws.title=="요율근거" and x.column_letter=="A" and not any(x.coordinate in mr for mr in ws.merged_cells.ranges): continue
                 a=copy(x.alignment); a.wrap_text=True; a.vertical='center'; x.alignment=a
     import math
     def textw(t): return sum(2.0 if ord(ch)>127 else 1.05 for ch in t)
@@ -36,7 +34,6 @@ def layout(ws):
         for x in ws[r]:
             cl=getattr(x,"column_letter",None)
             if cl in cols and isinstance(x.value,str) and x.value:
-                if ws.title=="요율근거" and cl=="A" and not any(x.coordinate in mr for mr in ws.merged_cells.ranges): continue
                 cw=w.get(cl, ws.column_dimensions[cl].width or 8.43)
                 # 병합 셀이면 병합 범위 너비 합산
                 for mr in ws.merged_cells.ranges:
@@ -45,19 +42,14 @@ def layout(ws):
                         cw=sum(w.get(GL(c), ws.column_dimensions[GL(c)].width or 8.43) for c in range(mr.min_col, mr.max_col+1))
                 sz=(x.font.sz or 10)
                 lines=sum(max(1, math.ceil(textw(seg)*sz/10/max(cw-1,1))) for seg in x.value.split("\n"))
-                need=max(need, lines*(sz*1.28)+(6 if ws.title=="요율근거" else 3))
+                need=max(need, lines*(sz*1.28)+3)
         rd=ws.row_dimensions[r]
         cur=rd.height
         if need and (cur is None or need>cur): rd.height=need
-    if ws.title=="요율근거":
-        from openpyxl.worksheet.pagebreak import Break
-        for r in range(1, ws.max_row+1):
-            v=ws.cell(r,1).value
-            if isinstance(v,str) and v.startswith("시중노임"):
-                ws.row_breaks.append(Break(id=r-1)); break
 def prep(wb, index=None):
-    names=[ws.title for ws in wb.worksheets]
-    for i,ws in enumerate(wb.worksheets):
+    vis=[ws for ws in wb.worksheets if ws.sheet_state=="visible"]   # 숨김 시트(요율 입력값)는 인쇄하지 않음
+    names=[ws.title for ws in vis]
+    for i,ws in enumerate(vis):
         layout(ws)
         ws.page_setup.paperSize=ws.PAPERSIZE_A4
         ws.page_setup.orientation="portrait"
@@ -84,7 +76,7 @@ def prep(wb, index=None):
         hdr=["No","시트","내용","페이지"]
         desc={"견적서":"표지·공종 합계·특기사항","원가계산서":"비목별 원가 집계 (A안)","AB비교":"A안·B안 금액 비교","산출근거":"항목별 산출식·근거",
               "도비":"A안 도비 내역","용접":"A안 용접 내역","베이스":"A안 베이스 내역","B_도비":"B안 도비 내역","B_용접":"B안 용접 내역","B_조방":"B안 조방 개조 내역",
-              "베이스자재":"H빔 자재 산출","공정표":"공정표 (가정 일정 10/21~11/2)","요율근거":"보험·관리비·이윤 요율 근거"}
+              "베이스자재":"H빔 자재 산출","공정표":"공정표 (가정 일정 10/21~11/2)"}
         thin=Side(style='thin',color=C_LINE)
         for c,h in enumerate(hdr,1):
             x=ix.cell(4,c,h); x.font=Font(name=FN_SB,size=10,color=C_TEXT); x.fill=PatternFill('solid',fgColor=C_HEAD); x.alignment=Alignment(horizontal='center')
