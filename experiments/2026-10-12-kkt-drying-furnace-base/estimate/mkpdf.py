@@ -4,10 +4,61 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from pypdf import PdfReader, PdfWriter
 SRC=sys.argv[1]; OUT=sys.argv[2]; W='/tmp/claude-0/-home-claude-personal-task/cc458d43-e61f-5be7-bef2-0fa5339e22e4/scratchpad/pdfwork'
 shutil.rmtree(W,ignore_errors=True); os.makedirs(W)
+DETAIL={"A":8,"B":16,"C":22,"D":7,"E":7,"F":11,"G":13,"H":22,"I":7}
+PRINT_W={"AB비교":{"A":14,"B":20,"C":20,"D":15,"E":44},
+         "산출근거":{"A":6,"B":13,"C":20,"D":30,"E":12,"F":30,"G":14},
+         "도비":DETAIL,"용접":DETAIL,"베이스":DETAIL,"B_도비":DETAIL,"B_용접":DETAIL,"B_조방":DETAIL,
+         "공정표":{"A":24,"B":26,"C":5.5,**{c:7 for c in "DEFGHIJKLMN"}},
+         "요율근거":{"A":18,"B":22,"C":12,"D":42,"E":8}}
+WRAP={"AB비교":("B","C","E"),"산출근거":("B","C","D","F","G"),"요율근거":("A","B","C","D"),"공정표":("A","B"),
+      **{k:("B","C","H") for k in ("도비","용접","베이스","B_도비","B_용접","B_조방")}}
+AUTOROW_FROM={"산출근거":2,"요율근거":2,"AB비교":4,"공정표":4,**{k:8 for k in ("도비","용접","베이스","B_도비","B_용접","B_조방")}}
+def layout(ws):
+    # 인쇄용 레이아웃: 세로 A4 폭에 맞게 열 너비를 줄이고, 긴 글은 줄바꿈 + 행 높이 자동
+    from copy import copy
+    w=PRINT_W.get(ws.title)
+    if not w: return
+    for col,v in w.items(): ws.column_dimensions[col].width=v
+    cols=WRAP.get(ws.title,())
+    r0=AUTOROW_FROM.get(ws.title,1)
+    for row in ws.iter_rows(min_row=r0):
+        for x in row:
+            if getattr(x,"column_letter",None) in cols and isinstance(x.value,str) and len(x.value)>8:
+                if ws.title=="요율근거" and x.column_letter=="A" and not any(x.coordinate in mr for mr in ws.merged_cells.ranges): continue
+                a=copy(x.alignment); a.wrap_text=True; a.vertical='center'; x.alignment=a
+    import math
+    def textw(t): return sum(2.0 if ord(ch)>127 else 1.05 for ch in t)
+    for r in range(r0, ws.max_row+1):
+        need=0
+        for x in ws[r]:
+            cl=getattr(x,"column_letter",None)
+            if cl in cols and isinstance(x.value,str) and x.value:
+                if ws.title=="요율근거" and cl=="A" and not any(x.coordinate in mr for mr in ws.merged_cells.ranges): continue
+                cw=w.get(cl, ws.column_dimensions[cl].width or 8.43)
+                # 병합 셀이면 병합 범위 너비 합산
+                for mr in ws.merged_cells.ranges:
+                    if x.coordinate in mr and mr.min_row==mr.max_row:
+                        from openpyxl.utils import get_column_letter as GL
+                        cw=sum(w.get(GL(c), ws.column_dimensions[GL(c)].width or 8.43) for c in range(mr.min_col, mr.max_col+1))
+                sz=(x.font.sz or 10)
+                lines=sum(max(1, math.ceil(textw(seg)*sz/10/max(cw-1,1))) for seg in x.value.split("\n"))
+                need=max(need, lines*(sz*1.28)+(6 if ws.title=="요율근거" else 3))
+        rd=ws.row_dimensions[r]
+        cur=rd.height
+        if need and (cur is None or need>cur): rd.height=need
+    if ws.title=="요율근거":
+        from openpyxl.worksheet.pagebreak import Break
+        for r in range(1, ws.max_row+1):
+            v=ws.cell(r,1).value
+            if isinstance(v,str) and v.startswith("시중노임"):
+                ws.row_breaks.append(Break(id=r-1)); break
 def prep(wb, index=None):
     names=[ws.title for ws in wb.worksheets]
     for i,ws in enumerate(wb.worksheets):
+        layout(ws)
         ws.page_setup.paperSize=ws.PAPERSIZE_A4
+        ws.page_setup.orientation="portrait"
+        ws.print_options.verticalCentered=False
         ws.page_setup.fitToWidth=1; ws.page_setup.fitToHeight=0
         ws.sheet_properties.pageSetUpPr.fitToPage=True
         ws.print_options.horizontalCentered=True
