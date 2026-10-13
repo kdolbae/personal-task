@@ -227,7 +227,7 @@ window.renderFrame=function(TT){
   // 인셋 없음 (클로즈업 영상 별도)
  }
  ctx.fillStyle='rgba(13,25,34,.88)';ctx.fillRect(0,0,1920,98);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font=`500 30px ${FONT}`;ctx.fillText(`진공건조로 · ${PLAN==='A'?'A안 빔 베이스':'B안 조방 개조 + 전체 회전'} · ${VIEW==='closeup'?'세부 화면':VIEW==='side'?'우측 상부뷰':'현장 항공뷰'}`,36,42);ctx.font=`23px ${FONT}`;ctx.fillText(stage,36,78);
- ctx.fillStyle='rgba(13,25,34,.85)';ctx.fillRect(690,1024,1230,56);ctx.fillStyle='#e9eff2';ctx.textAlign='left';ctx.font=`21px ${FONT}`;ctx.fillText('크레인 위치·줄걸이는 개념 표현 / 작업반경·정격하중은 업체 제원표로 확정',714,1058);
+ ctx.fillStyle='rgb(13,25,34)';ctx.fillRect(690,1024,1230,56);ctx.fillStyle='#e9eff2';ctx.textAlign='left';ctx.font=`21px ${FONT}`;ctx.fillText('크레인 위치·줄걸이는 개념 표현',714,1058);
  return stage;
 };
 window.renderFrame(0);window.ready=true;
