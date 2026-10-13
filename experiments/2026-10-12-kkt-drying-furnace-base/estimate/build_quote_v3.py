@@ -12,22 +12,37 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "견적서_금강변압기_진공건조로_회전안착_용접_v3.xlsx")
-FN = "맑은 고딕"
+# 디자인 규격 (엔엠솔루션 견적서 양식, kevin 2026-10-13): Pretendard 하나, Navy/Orange + 본문·보조·구분선·표머리 색만 사용
+FN = "Pretendard"
+FN_SB = "Pretendard SemiBold"
+C_NAVY, C_ORANGE, C_TEXT, C_SUB, C_LINE, C_HEAD = "0F2A44", "E8742A", "1D2430", "5D6878", "DDE3EA", "F4F6F9"
 WON = '#,##0;-#,##0;"-"'
-thin = Side(style="thin", color="000000")
+thin = Side(style="thin", color=C_LINE)
+navy2 = Side(style="medium", color=C_NAVY)   # 표 위 굵은 선 2pt
 BOX = Border(left=thin, right=thin, top=thin, bottom=thin)
-GRAY = PatternFill("solid", fgColor="F2F2F2")
-NAVY = PatternFill("solid", fgColor="1F3864")
-YEL = PatternFill("solid", fgColor="FFF2CC")
+HEADBOX = Border(left=thin, right=thin, top=navy2, bottom=thin)
+GRAY = PatternFill("solid", fgColor=C_HEAD)   # 표 머리·소계 배경
+NAVY = PatternFill("solid", fgColor=C_NAVY)   # 합계 줄
+YEL = PatternFill(fill_type=None)             # 규격상 노란 강조 미사용
 CEN = Alignment(horizontal="center", vertical="center", wrap_text=True)
 LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
 RIGHT = Alignment(horizontal="right", vertical="center")
 
-QNO = "NMS-2610-KKT-01"
-QDATE = "2026-10-12"
+QNO = "NM-2610-01"
+QDATE = "2026-10-13"
+SUP = {"name": "엔엠솔루션", "en": "NM SOLUTION", "ceo": "김성배",
+       "addr": "경기도 평택시 고덕동 도시지원로 121 지식공장아이타워 906호",
+       "tel": "1800-5901", "mobile": "010-2369-3691", "web": "nm-solution.co.kr", "bizno": ""}
+SUP_LINE = f"{SUP['name']}  |  {SUP['addr']}  |  대표전화 {SUP['tel']}  |  직통 {SUP['mobile']}  |  {SUP['web']}"
+_CMAP = {"000000": C_TEXT, "0000FF": C_TEXT, "008000": C_TEXT, "555555": C_SUB, "777777": C_SUB,
+         "999999": C_SUB, "AAAAAA": C_SUB, "0563C1": C_NAVY}
 
-def font(b=False, sz=10, color="000000"):
-    return Font(name=FN, bold=b, size=sz, color=color)
+def font(b=False, sz=10, color="000000", sb=False):
+    return Font(name=FN_SB if sb else FN, bold=b, size=sz, color=_CMAP.get(color, color))
+
+
+def head_cell(x):
+    x.font = font(sz=10, sb=True); x.fill = GRAY; x.border = HEADBOX; x.alignment = CEN
 
 # ---------------------------------------------------------------- 출처
 S_WAGE1 = "대한건설협회 2026년 상반기 적용 건설업 임금실태조사 보고서(2026.1.1 적용)"
@@ -248,19 +263,20 @@ def page(ws, landscape=False):
     ws.sheet_properties.pageSetUpPr.fitToPage = True
     ws.page_setup.fitToWidth = 1
     ws.page_setup.fitToHeight = 0
-    ws.page_margins.left = ws.page_margins.right = 0.5
-    ws.page_margins.top = ws.page_margins.bottom = 0.6
+    ws.page_margins.left = ws.page_margins.right = 0.63   # 16mm
+    ws.page_margins.top = ws.page_margins.bottom = 0.71    # 18mm
+    ws.page_margins.header = ws.page_margins.footer = 0.35
     ws.sheet_view.showGridLines = False
-    ws.oddFooter.center.text = "엔엠솔루션  |  " + QNO + "  |  &P / &N"
-    ws.oddFooter.center.size = 8
+    ws.oddFooter.left.text = f"&\"{FN}\"&8 " + SUP_LINE
+    ws.oddFooter.right.text = f"&\"{FN}\"&8 &P / &N"
 
 
 # ---------------------------------------------------------------- 요율근거 (먼저 만들어 셀 주소 확보)
 rs = wb.create_sheet("요율근거")
-rs["A1"] = "요율 및 단가 근거"; rs["A1"].font = font(True, 14)
-rs["A2"] = "파란 글씨는 입력값임. 변경 시 모든 공종 시트와 견적서가 다시 계산됨."; rs["A2"].font = font(sz=9, color="555555")
+rs["A1"] = "요율 및 단가 근거"; rs["A1"].font = font(True, 14, C_NAVY)
+rs["A2"] = "요율·단가 칸은 입력값임. 변경 시 모든 공종 시트와 견적서가 다시 계산됨."; rs["A2"].font = font(sz=9, color="555555")
 for c, h in enumerate(["항목", "적용 기준", "요율", "출처·비고"], 1):
-    x = rs.cell(4, c, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.alignment = CEN
+    x = rs.cell(4, c, h); head_cell(x)
 RC = {}
 r = 5
 for key, nm, v, base, src in RATES:
@@ -280,9 +296,9 @@ for rr in range(5, r):
         if x.font.name != FN: x.font = font()
     rs.row_dimensions[rr].height = 30
 r += 1
-rs.cell(r, 1, "시중노임 대비 적용 단가").font = font(True, 12); r += 1
+rs.cell(r, 1, "시중노임 대비 적용 단가").font = font(sz=12, sb=True); r += 1
 for c, h in enumerate(["직종 (견적)", "시중노임 직종", "시중노임(원/일)", "적용 단가(원/일)", "배율"], 1):
-    x = rs.cell(r, c, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.alignment = CEN
+    x = rs.cell(r, c, h); head_cell(x)
 h0 = r; r += 1
 for job, ref, rate in [("용접사", "플랜트용접공", R_WELD), ("고급기술자·제관사", "플랜트제관공", R_BOIL),
                        ("사상 기술자", "특별인부", R_GRIND), ("조공", "보통인부", R_HELP),
@@ -302,7 +318,7 @@ for rr in range(h0 + 1, r):
 rs.cell(r, 1, "시중노임은 " + S_WAGE1 + " 기준. " + S_WAGE2 + ". 적용 단가는 숙련 기능공 현장 실거래 수준(사용자 지시)으로 시중노임보다 높게 적용함.").font = font(sz=9, color="555555")
 rs.merge_cells(start_row=r, start_column=1, end_row=r, end_column=5); rs.cell(r, 1).alignment = LEFT; rs.row_dimensions[r].height = 30
 r += 2
-rs.cell(r, 1, "출처").font = font(True, 12); r += 1
+rs.cell(r, 1, "출처").font = font(sz=12, sb=True); r += 1
 for nm, url in URLS:
     rs.cell(r, 1, nm).font = font(); x = rs.cell(r, 2, url); x.font = font(sz=9, color="0563C1")
     if url.startswith("http"): x.hyperlink = url
@@ -315,15 +331,15 @@ page(rs, landscape=True)
 # ---------------------------------------------------------------- 공종 시트
 def header(ws, work, ncol=9):
     last = "ABCDEFGHI"[ncol - 1]
-    ws.merge_cells(f"A1:{last}2"); ws["A1"] = "공 종 별   내 역 서"; ws["A1"].font = font(True, 18); ws["A1"].alignment = CEN
+    ws.merge_cells(f"A1:{last}2"); ws["A1"] = "공 종 별   내 역 서"; ws["A1"].font = font(True, 16, C_NAVY); ws["A1"].alignment = CEN
     ws.merge_cells(f"A3:{last}3"); ws["A3"] = f"견적번호 {QNO}   |   견적일 {QDATE}   |   금강변압기 유한회사 귀중"
     ws["A3"].font = font(sz=9, color="555555"); ws["A3"].alignment = CEN
-    ws.merge_cells(f"A5:{last}5"); ws["A5"] = "공 종 : " + work; ws["A5"].font = font(True, 11); ws["A5"].alignment = LEFT
+    ws.merge_cells(f"A5:{last}5"); ws["A5"] = "공 종 : " + work; ws["A5"].font = font(sz=12, sb=True); ws["A5"].alignment = LEFT
 
 
 def table_head(ws, r):
     for c, h in zip(range(1, 10), ("구분", "품명", "규격", "단위", "수량", "단가", "금액", "비고", "비목")):
-        x = ws.cell(r, c, h); x.font = font(True, color="FFFFFF"); x.alignment = CEN; x.fill = NAVY; x.border = BOX
+        x = ws.cell(r, c, h); head_cell(x)
 
 
 ROWMAP, TOTREF, CALC = {}, {}, {}
@@ -383,10 +399,10 @@ def detail(name, rows, work):
         ws.cell(rr, 1).font = font(rr in (pos["NET"], tot))
         ws.cell(rr, 7).font = font(rr in (pos["NET"], tot))
     for c in range(1, 10):
-        ws.cell(tot, c).fill = YEL
-    ws.cell(tot, 1).font = font(True, 11); ws.cell(tot, 7).font = font(True, 11)
+        ws.cell(tot, c).fill = NAVY; ws.cell(tot, c).font = font(True, color="FFFFFF")
+    ws.cell(tot, 1).font = font(True, 11, "FFFFFF"); ws.cell(tot, 7).font = font(True, 11, "FFFFFF")
     fr = tot + 2
-    for t in ["※ 파란 글씨는 수량·단가 입력값이며, 근거는 '산출근거'·'요율근거' 시트에 정리함.",
+    for t in ["※ 수량·단가의 근거는 '산출근거'·'요율근거' 시트에 정리함.",
               "※ 연장·야간·휴일 작업은 공정에 따라 당사가 수행함 (추가 정산 없음)."]:
         ws.merge_cells(start_row=fr, start_column=1, end_row=fr, end_column=9)
         ws.cell(fr, 1, t).font = font(sz=9, color="555555"); fr += 1
@@ -402,10 +418,10 @@ for nm, rows, work in ALLWORKS:
 
 # ---------------------------------------------------------------- 원가계산서
 cs = wb.create_sheet("원가계산서", 1)
-cs.merge_cells("A1:F2"); cs["A1"] = "공 사 원 가 계 산 서"; cs["A1"].font = font(True, 18); cs["A1"].alignment = CEN
+cs.merge_cells("A1:F2"); cs["A1"] = "공 사 원 가 계 산 서"; cs["A1"].font = font(True, 16, C_NAVY); cs["A1"].alignment = CEN
 cs.merge_cells("A3:F3"); cs["A3"] = "공사명 : 진공건조로 회전·안착 및 접합부 용접 공사   |   " + QNO; cs["A3"].font = font(sz=9, color="555555"); cs["A3"].alignment = CEN
 for c, h in enumerate(["비목", "도비", "용접", "베이스", "합계", "구성비"], 1):
-    x = cs.cell(5, c, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.alignment = CEN; x.border = BOX
+    x = cs.cell(5, c, h); head_cell(x)
 lines = [("재료비", "M"), ("노무비", "L"), ("경비", "E"), ("산재보험료", "SAN"), ("고용보험료", "GOY"),
          ("산업안전보건관리비", "SAFE"), ("순공사원가", "NET"), ("일반관리비", "GEN"), ("이윤", "PROF"),
          ("단수정리", "RND"), ("공급가액", "TOT")]
@@ -431,109 +447,145 @@ for rr in (VATROW, GRAND):
     for c in range(1, 7):
         x = cs.cell(rr, c); x.border = BOX; x.font = font(rr == GRAND); x.alignment = CEN if c == 1 else RIGHT
         if c >= 2: x.number_format = WON
-        if rr == GRAND: x.fill = YEL
+        if rr == GRAND: x.fill = NAVY; x.font = font(True, color="FFFFFF")
 cs.cell(GRAND + 2, 1, "요율: 산재 3.56%·고용 1.15% (노무비 기준), 산업안전보건관리비 3.11% ((재료비 + 노무비) 기준), 일반관리비 5% (순공사원가 기준), 이윤은 공종별 15% 이내. 근거는 '요율근거' 시트.").font = font(sz=9, color="555555")
 cs.merge_cells(start_row=GRAND + 2, start_column=1, end_row=GRAND + 2, end_column=6)
 cs.cell(GRAND + 2, 1).alignment = LEFT; cs.row_dimensions[GRAND + 2].height = 30
 setw(cs, {"A": 20, "B": 15, "C": 15, "D": 15, "E": 16, "F": 9})
 page(cs)
 
-# ---------------------------------------------------------------- 견적서 표지
+# ---------------------------------------------------------------- 견적서 (엔엠솔루션 양식)
 sup_val = sum(CALC[n]["tot"] for n, _, _ in WORKS)
 grand_val = sup_val + sup_val // 10
 WORKNAME = "진공건조로 2분할체 회전·안착, 임시 베이스 제작, 접합부 사상·용접 공사"
 c = cover
-c.merge_cells("A1:I2"); c["A1"] = "견          적          서"; c["A1"].font = font(True, 24); c["A1"].alignment = CEN
-c.merge_cells("A3:I3"); c["A3"] = "QUOTATION"; c["A3"].font = font(sz=10, color="777777"); c["A3"].alignment = CEN
-# 왼쪽: 수신
-info_l = [("견적번호", QNO), ("견 적 일", QDATE), ("수    신", "금강변압기 유한회사 (KUMKANG TRANSFORMER) 귀중"),
-          ("참    조", ""), ("공 사 명", WORKNAME),
-          ("공사 장소", "경기 화성시 마도면 마도공단로1길 214 사내 마당"),
-          ("공사 기간", "2026.10.21 ~ 2026.11.02 (가계획, 작업일 11일, 공정표 시트 참조)"),
-          ("결제 조건", "협의 (예: 착수 30%, 준공 후 70%)"),
-          ("유효 기간", "견적일로부터 30일")]
-r = 5
-for k, v in info_l:
-    c.cell(r, 1, k).font = font(True); c.cell(r, 1).fill = GRAY; c.cell(r, 1).alignment = CEN
-    c.merge_cells(start_row=r, start_column=2, end_row=r, end_column=5); c.cell(r, 2, v).font = font(); c.cell(r, 2).alignment = LEFT
-    if k in ("참    조", "결제 조건"): c.cell(r, 2).fill = YEL
-    border_range(c, r, r, 1, 5); c.row_dimensions[r].height = 24
-    r += 1
-# 오른쪽: 공급자
-c.merge_cells("G5:G9"); c["G5"] = "공\n급\n자"; c["G5"].font = font(True); c["G5"].alignment = CEN; c["G5"].fill = GRAY
-sup = [("상    호", "엔엠솔루션"), ("대 표 자", "                    (인)"), ("사업자번호", ""), ("주    소", ""), ("연 락 처", "")]
-for i, (k, v) in enumerate(sup):
-    rr = 5 + i
-    c.cell(rr, 8, k).font = font(True); c.cell(rr, 8).alignment = CEN
-    c.cell(rr, 9, v).font = font(i == 0); c.cell(rr, 9).alignment = LEFT
-    if i: c.cell(rr, 9).fill = YEL
-border_range(c, 5, 9, 7, 9)
-c.merge_cells("G10:I13"); c["G10"] = "(직인)"; c["G10"].font = font(sz=9, color="AAAAAA"); c["G10"].alignment = CEN
-border_range(c, 10, 13, 7, 9)
+setw(c, {"A": 9, "B": 13, "C": 13, "D": 22, "E": 7, "F": 6, "G": 12, "H": 15, "I": 24})
+
+
+def merge_put(ws, r, c1, c2, v, f=None, al=LEFT, fill=None, border=None, fmt=None):
+    if c2 > c1: ws.merge_cells(start_row=r, start_column=c1, end_row=r, end_column=c2)
+    x = ws.cell(r, c1, v); x.font = f or font(); x.alignment = al
+    for cc in range(c1, c2 + 1):
+        y = ws.cell(r, cc)
+        if fill: y.fill = fill
+        if border: y.border = border
+    if fmt: x.number_format = fmt
+    return x
+
+
+# 1. 머리
+merge_put(c, 1, 1, 4, "N M   S O L U T I O N", font(sz=9, color=C_ORANGE, sb=True))
+merge_put(c, 2, 1, 4, "견  적  서", font(True, 22, C_NAVY)); c.merge_cells("A2:D3"); c.row_dimensions[2].height = 20; c.row_dimensions[3].height = 20
+c.cell(1, 8, "견적일자").font = font(color=C_SUB); c.cell(1, 8).alignment = RIGHT
+c.cell(1, 9, QDATE).font = font(); c.cell(1, 9).alignment = RIGHT
+c.cell(2, 8, "견적번호").font = font(color=C_SUB); c.cell(2, 8).alignment = RIGHT
+c.cell(2, 9, QNO).font = font(); c.cell(2, 9).alignment = RIGHT
+for cc in range(1, 10): c.cell(4, cc).border = Border(bottom=thin)
+c.row_dimensions[4].height = 8
+# 2. 수신 · 공급자 2단
+c.cell(5, 1, "수신").font = font(sz=12, sb=True); c.cell(5, 6, "공급자").font = font(sz=12, sb=True); c.row_dimensions[5].height = 22
+recv = [("업체명", "금강변압기 유한회사 (KUMKANG TRANSFORMER)"), ("담당자", ""), ("연락처", ""),
+        ("현장 주소", "경기 화성시 마도면 마도공단로1길 214 (사내 마당)"), ("공사명", WORKNAME), ("", "")]
+supl = [("상호", f"{SUP['name']} ({SUP['en']})"), ("대표", SUP["ceo"]), ("주소", SUP["addr"]),
+        ("전화", f"대표 {SUP['tel']}  /  직통 {SUP['mobile']}"), ("홈페이지", SUP["web"]), ("사업자등록번호", SUP["bizno"])]
+for i, ((lk, lv), (rk, rv)) in enumerate(zip(recv, supl)):
+    r = 6 + i
+    c.cell(r, 1, lk).font = font(color=C_SUB); c.cell(r, 1).alignment = LEFT
+    merge_put(c, r, 2, 4, lv)
+    merge_put(c, r, 6, 7, rk, font(color=C_SUB))
+    merge_put(c, r, 8, 9, rv)
+    c.row_dimensions[r].height = 30 if (len(lv) > 24 or len(rv) > 24) else 20
+    for cc in (1, 2, 3, 4, 6, 7, 8, 9): c.cell(r, cc).border = Border(bottom=thin)
+# 3. 합계 박스
+r = 13
+merge_put(c, r, 1, 9, f"견적금액  일금 {korean_won(sup_val)}원정  (₩ {sup_val:,}, VAT 별도)",
+          font(True, 13, C_NAVY), CEN, border=Border(top=navy2, bottom=navy2))
+c.row_dimensions[r].height = 36
+AMT_TEXT_ROW = r
+# 4. 견적 내역
 r = 15
-c.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9)
-c.cell(r, 1, "아래와 같이 견적함.").font = font(sz=10); r += 1
-c.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2); c.cell(r, 1, "합계 금액\n(부가세 포함)").font = font(True)
-c.cell(r, 1).alignment = CEN; c.cell(r, 1).fill = GRAY
-c.merge_cells(start_row=r, start_column=3, end_row=r, end_column=9)
-c.cell(r, 3, f"=원가계산서!E{GRAND}").font = font(True, 14); c.cell(r, 3).number_format = '"₩"#,##0'; c.cell(r, 3).alignment = CEN
-border_range(c, r, r, 1, 9); c.row_dimensions[r].height = 40
-WORDROW = r
-r += 2
-for col, h in zip(range(1, 10), ("No", "공종", "", "작업 내용", "단위", "수량", "공급가액", "", "비고")):
-    pass
-hdr = [(1, 1, "No"), (2, 3, "공  종"), (4, 6, "작업 내용"), (7, 7, "단위"), (8, 8, "공급가액"), (9, 9, "비고")]
-for a, b, h in hdr:
-    if b > a: c.merge_cells(start_row=r, start_column=a, end_row=r, end_column=b)
-    x = c.cell(r, a, h); x.font = font(True, color="FFFFFF"); x.alignment = CEN
-for cc in range(1, 10): c.cell(r, cc).fill = NAVY; c.cell(r, cc).border = BOX
-r += 1
-items = [("1", "도비 작업", "회전·베이스 안착(100t·60t), 밀착 이동, 안전펜스", "도비"),
-         ("2", "용접 작업", "접합면 사상, CO2 용접, 화재감시", "용접"),
-         ("3", "베이스 작업", "임시 사다리형 베이스 제작·설치·회수", "베이스")]
-i0 = r
-for no, nm, desc, key in items:
-    c.cell(r, 1, no); c.merge_cells(start_row=r, start_column=2, end_row=r, end_column=3); c.cell(r, 2, nm)
-    c.merge_cells(start_row=r, start_column=4, end_row=r, end_column=6); c.cell(r, 4, desc)
-    c.cell(r, 7, "식"); pre, pos = TOTREF[key]; x = c.cell(r, 8, f"={pre}{pos['TOT']}"); x.font = font(color="008000")
-    c.cell(r, 9, f"{key} 시트 참조")
+c.cell(r, 1, "견적 내역").font = font(sz=12, sb=True); c.row_dimensions[r].height = 22; r += 1
+hdr = [(1, 1, "번호"), (2, 3, "품명"), (4, 4, "규격"), (5, 5, "수량"), (6, 6, "단위"), (7, 7, "단가"), (8, 8, "금액"), (9, 9, "비고")]
+for a, b_, h in hdr:
+    if b_ > a: c.merge_cells(start_row=r, start_column=a, end_row=r, end_column=b_)
+    c.cell(r, a, h)
+for cc in range(1, 10): head_cell(c.cell(r, cc))
+c.row_dimensions[r].height = 22
+HEADROW = r; r += 1
+groups = [("도비", "도비 작업: 회전·베이스 안착(100t·60t), 밀착 이동, 안전펜스"),
+          ("용접", "용접 작업: 접합면 사상, CO2 용접, 화재감시"),
+          ("베이스", "베이스 작업: 임시 사다리형 베이스 제작·설치·회수")]
+sub_rows = []
+no = 0
+for key, gtitle in groups:
+    merge_put(c, r, 2, 9, gtitle, font(sb=True), LEFT, border=BOX); c.cell(r, 1).border = BOX; c.row_dimensions[r].height = 20; r += 1
+    pre, pos = TOTREF[key]
+    for dr, row in ROWMAP[key]:
+        no += 1
+        c.cell(r, 1, no)
+        merge_put(c, r, 2, 3, row[1]); c.cell(r, 4, row[2])
+        c.cell(r, 5, f"={key}!E{dr}"); c.cell(r, 6, f"={key}!D{dr}")
+        c.cell(r, 7, f"={key}!F{dr}"); c.cell(r, 8, f"={key}!G{dr}"); c.cell(r, 9, row[6])
+        r += 1
+    no += 1
+    c.cell(r, 1, no); merge_put(c, r, 2, 3, "법정경비·일반관리비·이윤")
+    c.cell(r, 4, "산재·고용보험, 산업안전보건관리비, 일반관리비, 이윤, 단수정리")
+    c.cell(r, 5, 1); c.cell(r, 6, "식"); c.cell(r, 7, f"=H{r}")
+    c.cell(r, 8, f"={pre}{pos['TOT']}-{pre}{pos['M']}-{pre}{pos['L']}-{pre}{pos['E']}"); c.cell(r, 9, "요율근거 시트"); r += 1
+    merge_put(c, r, 1, 7, f"{key} 소계", font(sb=True), RIGHT, fill=GRAY)
+    x = c.cell(r, 8, f"={pre}{pos['TOT']}"); x.font = font(sb=True); c.cell(r, 9, f"{key} 시트 참조").font = font(color=C_SUB)
+    for cc in range(1, 10): c.cell(r, cc).fill = GRAY
+    sub_rows.append(r); r += 1
+first_item = HEADROW + 1
+tot_rows = [("공급가액", "=" + "+".join(f"H{x}" for x in sub_rows)), ("부가세 (10%)", f"=H{r}*0.1"), ("합계 (VAT 포함)", f"=H{r}+H{r+1}")]
+for j, (k, f) in enumerate(tot_rows):
+    last = j == 2
+    merge_put(c, r, 1, 7, k, font(True, 13 if last else 10, "FFFFFF" if last else C_TEXT), RIGHT, fill=NAVY if last else GRAY)
+    x = c.cell(r, 8, f); x.font = font(True, 13 if last else 10, "FFFFFF" if last else C_TEXT)
+    for cc in range(1, 10): c.cell(r, cc).fill = NAVY if last else GRAY
+    c.row_dimensions[r].height = 26 if last else 20
     r += 1
-rows_tot = [("공 급 가 액", f"=SUM(H{i0}:H{r-1})"), ("부 가 세 (10%)", f"=H{r}*0.1"), ("합      계", f"=H{r}+H{r+1}")]
-for j, (k, f) in enumerate(rows_tot):
-    c.merge_cells(start_row=r, start_column=1, end_row=r, end_column=7); c.cell(r, 1, k).font = font(True)
-    c.cell(r, 8, f).font = font(True); c.cell(r, 8).number_format = WON
-    for cc in range(1, 10): c.cell(r, cc).fill = GRAY if j < 2 else YEL
-    r += 1
-for rr in range(i0, r):
+SUPROW_C, VATROW_C, GRANDROW_C = r - 3, r - 2, r - 1
+for rr in range(first_item, r):
     for cc in range(1, 10):
         x = c.cell(rr, cc); x.border = BOX
-        if x.font.name != FN: x.font = font()
-        if x.alignment.horizontal is None: x.alignment = LEFT if cc in (4, 9) else CEN
-        if cc == 8: x.number_format = WON; x.alignment = RIGHT
-    c.row_dimensions[rr].height = 24
+        if x.font.name not in (FN, FN_SB): x.font = font()
+        if cc in (5, 7, 8): x.number_format = WON; x.alignment = RIGHT
+        elif cc in (1, 6): x.alignment = CEN
+        elif x.alignment.horizontal is None: x.alignment = LEFT
+    if c.row_dimensions[rr].height is None: c.row_dimensions[rr].height = 20
+# 5. 특기사항
 r += 1
-c.cell(r, 1, "특기사항").font = font(True, 11); r += 1
+c.cell(r, 1, "특기사항").font = font(sz=12, sb=True); c.row_dimensions[r].height = 22; r += 1
 NOTES = [
-    "1. 전기 수전, 배관·닥트 해체·복구, 보온, 도장, 시운전은 포함하지 않음.",
-    "2. 크레인 사양·배치는 인양계획서와 지반 검토 후 확정하며, 크레인 변경에 따른 추가비용은 없음.",
-    "3. 비파괴검사(PT/UT)는 포함하지 않으며, 발주처 요구 시 별도 정산함.",
-    "4. 연장·야간·휴일 작업은 공정에 따라 당사가 수행하며 추가 정산하지 않음. 기상(우천 시 용접 불가)·발주처 사유에 따른 대기는 별도 협의함.",
-    "5. 작업구역(약 10×15m)은 이동식 안전펜스로 통제하며, 발주처 안전관리 규정과 출입 절차를 따름.",
-    "6. 대안(B안: 기존 조방 개조 + 전체 90° 회전)의 금액은 AB비교 시트에 정리함.",
+    "1. 공사 기간: 2026.10.21 ~ 2026.11.02 (가계획, 작업일 11일, 공정표 시트 참조). 착공일은 발주처 협의로 확정함.",
+    "2. 결제 조건: 협의 (예: 착수 30%, 준공 후 70%).",
+    "3. 견적 유효기간: 발행일로부터 30일.",
+    "4. 포함: 임시 베이스 제작·설치·회수, 이동식 크레인(100t·60t)·도비, 접합면 사상, CO2 용접, 화재감시, 안전펜스·출입통제.",
+    "5. 제외: 전기 수전, 배관·닥트 해체·복구, 보온, 도장, 비파괴검사(PT/UT), 시운전. 비파괴검사는 발주처 요구 시 별도 정산함.",
+    "6. 크레인 사양·배치는 인양계획서와 지반 검토 후 확정하며, 크레인 변경에 따른 추가비용은 없음.",
+    "7. 연장·야간·휴일 작업은 공정에 따라 당사가 수행하며 추가 정산하지 않음. 기상(우천 시 용접 불가)·발주처 사유에 따른 대기는 별도 협의함.",
+    "8. 작업구역(약 10×15m)은 이동식 안전펜스로 통제하며, 발주처 안전관리 규정과 출입 절차를 따름.",
+    "9. 대안(B안: 기존 조방 개조 + 전체 90° 회전)의 금액은 AB비교 시트에 정리함.",
 ]
 for t in NOTES:
-    c.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9)
-    c.cell(r, 1, t).font = font(sz=9); c.cell(r, 1).alignment = LEFT; c.row_dimensions[r].height = 18; r += 1
-c.cell(r + 1, 1, "노란 칸은 공급자 정보·협의 항목으로 채워야 하는 칸임.").font = font(sz=8, color="999999")
-setw(c, {"A": 11, "B": 9, "C": 9, "D": 12, "E": 12, "F": 8, "G": 8, "H": 15, "I": 26})
+    merge_put(c, r, 1, 9, t); c.row_dimensions[r].height = 30 if len(t) > 60 else 20; r += 1
+# 6. 바닥
+r += 1
+merge_put(c, r, 1, 9, "위와 같이 견적합니다.", font(), CEN); c.row_dimensions[r].height = 22; r += 1
+_y, _m, _d = QDATE.split("-")
+merge_put(c, r, 1, 9, f"{_y}년 {int(_m)}월 {int(_d)}일", font(), CEN); c.row_dimensions[r].height = 22; r += 1
+merge_put(c, r, 1, 9, f"{SUP['name']}   대표 {SUP['ceo']}   (인)", font(sz=12, sb=True), CEN); c.row_dimensions[r].height = 26; r += 2
+merge_put(c, r, 1, 9, SUP_LINE, font(sz=8, color=C_SUB), CEN, border=Border(top=thin)); c.row_dimensions[r].height = 18
 page(c)
+c.print_title_rows = f"{HEADROW}:{HEADROW}"
 
 # ---------------------------------------------------------------- 산출근거
 gs = wb.create_sheet("산출근거", 2)
-gs["A1"] = "견적 산출근거"; gs["A1"].font = font(True, 14)
-gs["A2"] = "금액은 공종 시트에서 연동됨(초록). 노란 칸은 업체 견적으로 확인할 가정값임."; gs["A2"].font = font(sz=9, color="555555")
+gs["A1"] = "견적 산출근거"; gs["A1"].font = font(True, 14, C_NAVY)
+gs["A2"] = "금액은 공종 시트에서 연동됨. 근거란에 '가정값'으로 표시한 항목은 업체 견적으로 확인할 값임."; gs["A2"].font = font(sz=9, color="555555")
 for cc, h in enumerate(["공종", "품명", "규격", "산출식", "금액(원)", "근거", "시중노임 참고"], 1):
-    x = gs.cell(4, cc, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.border = BOX; x.alignment = CEN
+    x = gs.cell(4, cc, h); head_cell(x)
 r = 5
 for nm, _, _ in ALLWORKS:
     for dr, row in ROWMAP[nm]:
@@ -542,7 +594,6 @@ for nm, _, _ in ALLWORKS:
         x = gs.cell(r, 5, f"={nm}!G{dr}"); x.font = font(color="008000"); x.number_format = WON
         gs.cell(r, 6, src)
         if wref: gs.cell(r, 7, f"{wref[0]} {wref[1]:,}원")
-        if "가정" in src: gs.cell(r, 6).fill = YEL
         r += 1
     pre, pos = TOTREF[nm]
     for label, k in (("법정경비·일반관리비·이윤", None), ("공종 합계", "TOT")):
@@ -568,9 +619,9 @@ gs.print_title_rows = "4:4"
 
 # ---------------------------------------------------------------- 베이스 자재
 bs = wb.create_sheet("베이스자재")
-bs["A1"] = "베이스 자재: H-250×250×9×14 (공급처 견적, 부가세 미포함)"; bs["A1"].font = font(True, 13)
+bs["A1"] = "베이스 자재: H-250×250×9×14 (공급처 견적, 부가세 미포함)"; bs["A1"].font = font(True, 14, C_NAVY)
 for cc, h in enumerate(["길이(m)", "수량(EA)", "총 길이(m)", "단위중량(kg/m)", "중량(kg)"], 1):
-    x = bs.cell(3, cc, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.border = BOX; x.alignment = CEN
+    x = bs.cell(3, cc, h); head_cell(x)
 for i, (ln, q) in enumerate([(10, 4), (5, 16), (0.6, 30)]):
     rr = 4 + i
     bs.cell(rr, 1, ln).font = font(color="0000FF"); bs.cell(rr, 2, q).font = font(color="0000FF")
@@ -580,7 +631,7 @@ bs.cell(7, 2, "합계").font = font(True); bs.cell(7, 3, "=SUM(C4:C6)"); bs.cell
 border_range(bs, 4, 7, 1, 5)
 for cc in range(1, 6): bs.cell(7, cc).fill = GRAY
 for cc, h in enumerate(["구분", "금액(원)", "kg당(원)", "비고"], 1):
-    x = bs.cell(9, cc, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.alignment = CEN
+    x = bs.cell(9, cc, h); head_cell(x)
 vals = [("신품 구매", 13_575_440, "공급처 견적"), ("중고 구매", 9_577_783, "공급처 견적"),
         ("고철 매각 예상", 4_000_000, "사용자 제시 (약 400만원)"),
         ("회수조건 적용", "=E7*700", "kg당 700원, 견적 반영"),
@@ -603,7 +654,7 @@ _d = _dt.date(2026, 10, 21)
 while len(WDAYS) < 11:
     if _d.weekday() != 6: WDAYS.append(f"{_d.month}/{_d.day}\n" + "월화수목금토일"[_d.weekday()])
     _d += _dt.timedelta(days=1)
-ps["A1"] = "공정표 (가계획 2026.10.21 ~ 11.02, 작업일 11일)"; ps["A1"].font = font(True, 14)
+ps["A1"] = "공정표 (가계획 2026.10.21 ~ 11.02, 작업일 11일)"; ps["A1"].font = font(True, 14, C_NAVY)
 steps = [("안전펜스 설치·작업구역 통제", "조공 2명", 1, 1), ("베이스 제작·설치", "제관 2, 용접 1, 조공 1, 화재감시 1", 1, 3),
          ("회전·베이스 안착 (100t + 60t)", "도비 6명, 신호수 2, 안전담당", 4, 4),
          ("접합면 사상", "사상 2, 조공 2, 화재감시 1", 5, 6), ("용접면 밀착 이동", "도비 6명·3명, 안전담당", 7, 8),
@@ -628,9 +679,9 @@ page(ps, landscape=True)
 
 # ---------------------------------------------------------------- A·B 비교
 xs = wb.create_sheet("AB비교", 2)
-xs.merge_cells("A1:E1"); xs["A1"] = "A안 · B안 금액 비교 (공급가액, 부가세 별도)"; xs["A1"].font = font(True, 14)
+xs.merge_cells("A1:E1"); xs["A1"] = "A안 · B안 금액 비교 (공급가액, 부가세 별도)"; xs["A1"].font = font(True, 14, C_NAVY)
 for cc, h in enumerate(["구분", "A안 (임시 베이스 + 밀착 이동)", "B안 (조방 개조 + 90° 회전)", "차액 (B − A)", "비고"], 1):
-    x = xs.cell(3, cc, h); x.font = font(True, color="FFFFFF"); x.fill = NAVY; x.alignment = CEN
+    x = xs.cell(3, cc, h); head_cell(x)
 pairs = [("도비", "도비", "B_도비", "B안: 200t급 크레인 1대 추가(350만/일, 단독 90° 회전), 도비 6명 1일 추가"),
          ("용접", "용접", "B_용접", "같은 인원·장비로 상부·측면 용접 후 회전해서 하부 용접"),
          ("베이스 / 조방", "베이스", "B_조방", "B안: 신규 베이스 대신 조방 개조(현장 보강보), 기구물·배관 제거·복원 2명 × 2일")]
@@ -651,7 +702,7 @@ for rr in range(4, r + 1):
         x.alignment = RIGHT if cc in (2, 3, 4) else LEFT
         if cc in (2, 3, 4): x.number_format = WON
     xs.row_dimensions[rr].height = 30
-for cc in range(1, 6): xs.cell(r, cc).fill = YEL
+for cc in range(1, 6): xs.cell(r, cc).fill = NAVY; xs.cell(r, cc).font = font(True, color="FFFFFF")
 r += 2
 for t in ["※ B안 200t급 크레인은 사용자 제시 단가 350만/일 적용. 회송·웨이트 운반은 별도 줄로 넣음. B안 용접은 3면 용접 → 전체 90° 회전 → 나머지 1면 용접 순서로, 용접 1일이 회전 후로 이동함(금액 동일).",
           "※ B안 회전은 일체 약 83t(45t + 38t)을 모서리 기준으로 세우는 작업으로, 실제 크레인 사양은 인양계획서·구조검토로 확정 필요함.",

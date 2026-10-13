@@ -4,37 +4,37 @@
 <style>
 @page{size:A4;margin:0}
 html,body{margin:0;padding:0}
-body{font-family:"WenQuanYi Zen Hei","Noto Sans CJK KR",sans-serif;color:#111;line-height:1.5}
-.page{width:210mm;height:297mm;box-sizing:border-box;padding:18mm 20mm 14mm 20mm;position:relative;page-break-after:always;display:flex;flex-direction:column;overflow:hidden}
+body{font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#1D2430;line-height:1.5}
+.page{width:210mm;height:297mm;box-sizing:border-box;padding:18mm 16mm 18mm 16mm;position:relative;page-break-after:always;display:flex;flex-direction:column;overflow:hidden}
 .page:last-child{page-break-after:auto}
-.band{position:absolute;left:0;top:0;width:12mm;height:297mm;background:#1f3864}
-.brand{font-size:10pt;color:#1f3864;letter-spacing:.12em;font-weight:bold;margin-left:4mm}
-.brand small{display:block;font-size:8pt;color:#666;letter-spacing:0;font-weight:normal;margin-top:1mm}
+.band{position:absolute;left:0;top:0;width:10mm;height:297mm;background:#0F2A44}
+.brand{font-size:9pt;color:#E8742A;letter-spacing:.25em;font-weight:600;margin-left:4mm}
+.brand small{display:block;font-size:8pt;color:#5D6878;letter-spacing:0;font-weight:normal;margin-top:1mm}
 .title{margin:14mm 0 0 4mm}
-.title .kicker{font-size:12pt;color:#1f3864;letter-spacing:.2em;margin-bottom:3mm}
-.title h1{font-size:28pt;line-height:1.3;margin:0;color:#111}
-.title h2{font-size:17pt;font-weight:normal;color:#333;margin:5mm 0 0 0}
+.title .kicker{font-size:12pt;color:#0F2A44;font-weight:600;letter-spacing:.2em;margin-bottom:3mm}
+.title h1{font-size:28pt;line-height:1.3;margin:0;color:#0F2A44;font-weight:700}
+.title h2{font-size:17pt;font-weight:normal;color:#1D2430;margin:5mm 0 0 0}
 .docs{margin:8mm 0 0 4mm;display:flex;gap:6mm}
-.docs div{border:1.5px solid #1f3864;padding:4mm 7mm;font-size:13pt;color:#1f3864;font-weight:bold}
-.docs div span{display:block;font-size:9pt;font-weight:normal;color:#555;margin-top:1mm}
+.docs div{border-top:2pt solid #0F2A44;border-bottom:1px solid #DDE3EA;padding:4mm 7mm;font-size:12pt;color:#0F2A44;font-weight:600}
+.docs div span{display:block;font-size:8pt;font-weight:normal;color:#5D6878;margin-top:1mm}
 figure{margin:9mm 0 0 4mm}
-figure img{width:100%;height:88mm;object-fit:cover;display:block;border:1px solid #999}
-figcaption{font-size:8.5pt;color:#555;margin-top:1.5mm}
-table.info{border-collapse:collapse;width:calc(100% - 4mm);margin:auto 0 0 4mm;font-size:10.5pt}
-table.info th,table.info td{border-top:1px solid #bbb;padding:2mm 2mm;text-align:left;vertical-align:top}
-table.info th{width:24%;color:#1f3864;font-weight:bold;background:#f2f5fa}
-table.info tr:last-child th,table.info tr:last-child td{border-bottom:1px solid #bbb}
-.foot{margin:4mm 0 0 4mm;display:flex;justify-content:space-between;font-size:9pt;color:#666}
+figure img{width:100%;height:84mm;object-fit:cover;display:block;border:1px solid #DDE3EA}
+figcaption{font-size:8pt;color:#5D6878;margin-top:1.5mm}
+table.info{border-collapse:collapse;width:calc(100% - 4mm);margin:auto 0 0 4mm;font-size:10pt;border-top:2pt solid #0F2A44}
+table.info th,table.info td{border-top:1px solid #DDE3EA;padding:1.8mm 2mm;text-align:left;vertical-align:top}
+table.info th{width:24%;color:#1D2430;font-weight:600;background:#F4F6F9}
+table.info tr:last-child th,table.info tr:last-child td{border-bottom:1px solid #DDE3EA}
+.foot{margin:4mm 0 0 4mm;display:flex;justify-content:space-between;font-size:8pt;color:#5D6878}
 /* page 2 */
-.p2 h1{font-size:18pt;margin:0 0 2mm 4mm;color:#111}
-.p2 .sub{font-size:9.5pt;color:#555;margin:0 0 8mm 4mm}
-table.toc{border-collapse:collapse;width:calc(100% - 4mm);margin-left:4mm;font-size:10.5pt}
-table.toc th,table.toc td{border:1px solid #999;padding:2.2mm 2.5mm;vertical-align:top;text-align:left}
-table.toc th{background:#e8edf5;color:#1f3864}
+.p2 h1{font-size:22pt;letter-spacing:.06em;margin:0 0 2mm 4mm;color:#0F2A44}
+.p2 .sub{font-size:9pt;color:#5D6878;margin:0 0 8mm 4mm}
+table.toc{border-collapse:collapse;width:calc(100% - 4mm);margin-left:4mm;font-size:10pt;border-top:2pt solid #0F2A44}
+table.toc th,table.toc td{border:1px solid #DDE3EA;padding:2.2mm 2.5mm;vertical-align:top;text-align:left}
+table.toc th{background:#F4F6F9;color:#1D2430;font-weight:600}
 table.toc td.c{text-align:center;white-space:nowrap}
-table.toc tr.sec td{background:#f2f5fa;font-weight:bold}
+table.toc tr.sec td{background:#F4F6F9;font-weight:600}
 table.toc td.sub{padding-left:8mm}
-.note{margin:8mm 0 0 4mm;font-size:9.5pt;color:#333}
+.note{margin:8mm 0 0 4mm;font-size:9pt;color:#1D2430}
 .note li{margin:1mm 0}
 </style></head><body>
 
@@ -56,10 +56,10 @@ table.toc td.sub{padding-left:8mm}
     <tr><th>대상물</th><td>진공건조로 2분할체 (1번 도어부 45t, 2번 후면부 38t, 합계 약 83t)</td></tr>
     <tr><th>공사 범위</th><td>베이스 제작·설치, 회전·안착, 밀착 이동, 접합면 사상, 접합부 용접 (대안: 기존 조방 개조 + 전체 90° 회전)</td></tr>
     <tr><th>공기 (가계획)</th><td>2026. 10. 21(수) ~ 11. 02(월), 작업일 11일</td></tr>
-    <tr><th>공급자</th><td>엔엠솔루션</td></tr>
+    <tr><th>공급자</th><td>엔엠솔루션 (NM SOLUTION) · 대표 김성배 · 경기도 평택시 고덕동 도시지원로 121 지식공장아이타워 906호 · 대표전화 1800-5901 · 직통 010-2369-3691 · nm-solution.co.kr</td></tr>
     <tr><th>제출일</th><td>2026. 10. 13</td></tr>
   </table>
-  <div class="foot"><span>엔엠솔루션 → 금강변압기 유한회사</span><span>작업계획서 · 견적서 v3</span></div>
+  <div class="foot"><span>엔엠솔루션 → 금강변압기 유한회사 · 견적번호 NM-2610-01</span><span>작업계획서 · 견적서</span></div>
 </div>
 
 <div class="page p2">
@@ -69,13 +69,13 @@ table.toc td.sub{padding-left:8mm}
   <table class="toc">
     <tr><th style="width:12%">구분</th><th>내용</th><th style="width:16%">문서 내 쪽</th><th style="width:14%">묶음 쪽</th></tr>
     <tr class="sec"><td class="c">표지</td><td>표지 · 문서 구성</td><td class="c">—</td><td class="c">1 ~ 2</td></tr>
-    <tr class="sec"><td class="c">Ⅰ</td><td>작업계획서</td><td class="c">1 ~ 15</td><td class="c">3 ~ 17</td></tr>
+    <tr class="sec"><td class="c">Ⅰ</td><td>작업계획서</td><td class="c">1 ~ 14</td><td class="c">3 ~ 16</td></tr>
     <tr><td></td><td class="sub">1. 공사 개요 · 2. A안 작업 순서 · 3. 인양계획 · 4. 타임테이블</td><td class="c">1 ~ 7</td><td class="c">3 ~ 9</td></tr>
-    <tr><td></td><td class="sub">5. B안 작업 순서 · 6. A안/B안 비교 · 7. 안전 · 8. 확인 사항</td><td class="c">7 ~ 15</td><td class="c">9 ~ 17</td></tr>
-    <tr class="sec"><td class="c">Ⅱ</td><td>견적서 (v3, 부가세 별도)</td><td class="c">1 ~ 17</td><td class="c">18 ~ 34</td></tr>
-    <tr><td></td><td class="sub">목차 · 견적서 표지(공종 합계·특기사항) · 원가계산서 · A안/B안 비교</td><td class="c">1 ~ 4</td><td class="c">18 ~ 21</td></tr>
-    <tr><td></td><td class="sub">산출근거 · A안 도비/용접/베이스 내역 · B안 도비/용접/조방 개조 내역</td><td class="c">5 ~ 13</td><td class="c">22 ~ 30</td></tr>
-    <tr><td></td><td class="sub">베이스 자재 산출 · 공정표 · 요율 근거</td><td class="c">14 ~ 17</td><td class="c">31 ~ 34</td></tr>
+    <tr><td></td><td class="sub">5. B안 작업 순서 · 6. A안/B안 비교 · 7. 안전 · 8. 확인 사항</td><td class="c">7 ~ 14</td><td class="c">9 ~ 16</td></tr>
+    <tr class="sec"><td class="c">Ⅱ</td><td>견적서 (부가세 별도)</td><td class="c">1 ~ 18</td><td class="c">17 ~ 34</td></tr>
+    <tr><td></td><td class="sub">목차 · 견적서(내역·특기사항) · 원가계산서 · A안/B안 비교</td><td class="c">1 ~ 5</td><td class="c">17 ~ 21</td></tr>
+    <tr><td></td><td class="sub">산출근거 · A안 도비/용접/베이스 내역 · B안 도비/용접/조방 개조 내역</td><td class="c">6 ~ 14</td><td class="c">22 ~ 30</td></tr>
+    <tr><td></td><td class="sub">베이스 자재 산출 · 공정표 · 요율 근거</td><td class="c">15 ~ 18</td><td class="c">31 ~ 34</td></tr>
   </table>
   <ul class="note">
     <li>견적 요약: A안(신규 베이스) 공급가액 71,692,000원, B안(조방 개조) 67,670,000원, 부가세 별도. 세부 산출은 견적서 참조.</li>
