@@ -548,7 +548,7 @@ for nm, _, _ in ALLWORKS:
     for label, k in (("법정경비·일반관리비·이윤", None), ("공종 합계", "TOT")):
         gs.cell(r, 2, label).font = font(True)
         if k: x = gs.cell(r, 5, f"={pre}{pos[k]}")
-        else: x = gs.cell(r, 5, f"={pre}{pos['TOT']}-SUM({pre}{pos['M']}:{pre}{pos['E']})")
+        else: x = gs.cell(r, 5, f"={pre}{pos['TOT']}-SUM({pre}{pos['M']}:$G${pos['E']})")
         x.font = font(True); x.number_format = WON
         gs.cell(r, 6, "요율근거 시트" if not k else (f"목표 약 {TARGETS[nm]:,}원 (사용자 제시)" if nm in TARGETS else "B안 (대안)"))
         for cc in range(1, 8): gs.cell(r, cc).fill = GRAY
