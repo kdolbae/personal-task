@@ -1,0 +1,210 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>진공건조로 현장 공정</title><style>html,body{margin:0;background:#15212a}canvas{display:block}</style></head><body><canvas id="film" width="1920" height="1080"></canvas><script type="module">
+import * as THREE from './three.module.js';
+const Q=new URLSearchParams(window.location.search),PLAN=(Q.get('plan')||'A').toUpperCase(),VIEW=Q.get('view')||'aerial',W1=Q.get('w1')||'38',W2=Q.get('w2')||'48',HOLD=3;
+const FONT='"Pretendard","Malgun Gothic",sans-serif';
+const film=document.getElementById('film'),ctx=film.getContext('2d');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+renderer.setSize(1920,1080);renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;
+const scene=new THREE.Scene();scene.background=new THREE.Color('#c2c9ca');
+scene.add(new THREE.HemisphereLight(0xd9efff,0x59534a,2));const sun=new THREE.DirectionalLight(0xffefd7,3.1);sun.position.set(-18,40,18);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-60,right:60,top:50,bottom:-50,near:1,far:150});sun.shadow.bias=-.0003;scene.add(sun);
+const loader=new THREE.TextureLoader();const aerial=await loader.loadAsync('./site-background.png');aerial.colorSpace=THREE.SRGBColorSpace;
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(1593/15,987/15),new THREE.MeshBasicMaterial({map:aerial}));ground.rotation.x=-Math.PI/2;scene.add(ground);
+const shadow=new THREE.Mesh(new THREE.PlaneGeometry(1593/15,987/15),new THREE.ShadowMaterial({opacity:.32}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.01;shadow.receiveShadow=true;scene.add(shadow);
+const texture=await loader.loadAsync('./steel-texture.png');texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(2,2);
+const steel=new THREE.MeshStandardMaterial({color:0xc4cacc,roughness:.7,metalness:.08,emissive:0x2a2e30});const beam=new THREE.MeshStandardMaterial({color:0xd0d5d7,roughness:.6,metalness:.1,emissive:0x2a2e30});const pipeM=new THREE.MeshStandardMaterial({color:0xbfc5c6,roughness:.5,metalness:.3});const strap=new THREE.MeshStandardMaterial({color:0x2459c9,roughness:.6});
+const dark=new THREE.MeshStandardMaterial({color:0x343c3c,roughness:.85,metalness:.3});const rust=new THREE.MeshStandardMaterial({color:0x885236,roughness:.91,metalness:.2});const blue=new THREE.MeshStandardMaterial({color:0x1462bc,roughness:.4,metalness:.1});
+const baseMat=new THREE.MeshStandardMaterial({color:0x5f7684,roughness:.6,metalness:.3,emissive:0x101418});const jigMat=new THREE.MeshStandardMaterial({color:0x7a4a2e,roughness:.9,metalness:.2});const newSteel=new THREE.MeshStandardMaterial({color:0x8fa0a8,roughness:.55,metalness:.35,emissive:0x141a1e});const timber=new THREE.MeshStandardMaterial({color:0xa9834f,roughness:.95});
+function box(g,x,y,z,w,h,d,mat=beam){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m}
+function rod(g,a,b,r,mat=beam){const av=new THREE.Vector3(...a),bv=new THREE.Vector3(...b),v=bv.clone().sub(av);const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,v.length(),10),mat);m.position.copy(av.add(bv).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());m.castShadow=true;g.add(m);return m}
+function flange(g,x,y,z,cap=false){rod(g,[x,y,z],[x,y,z+.3],.12);const m=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.08,20),cap?blue:beam);m.rotation.x=Math.PI/2;m.position.set(x,y,z+.34);m.castShadow=true;g.add(m);for(let j=0;j<8;j++){const a=j*Math.PI/4;rod(g,[x+.18*Math.cos(a),y+.18*Math.sin(a),z+.37],[x+.18*Math.cos(a),y+.18*Math.sin(a),z+.40],.018,dark)}}
+// ---------------- 탱크 (body: x,z ±3.0 외곽, y -2.3~2.5, 절단면 = -y)
+function tank(door){const root=new THREE.Group(),shell=new THREE.Group();root.add(shell);scene.add(root);
+ box(shell,0,0,-2.45,5,4,.10,steel);box(shell,0,0,2.45,5,4,.10,steel);box(shell,-2.45,0,0,.10,4,5,steel);box(shell,2.45,0,0,.10,4,5,steel);
+ for(const side of [-1,1]){
+  for(let r=0;r<=5;r++){const y=-2+r*.8;box(shell,0,y,side*2.6,5.35,.17,.38);box(shell,side*2.6,y,0,.38,.17,5.35)}
+  for(let c=0;c<=6;c++){const q=-2.45+c*4.9/6;box(shell,q,0,side*2.77,.055,4.45,.075);box(shell,side*2.77,0,.98*q,.075,4.45,.055)}
+  for(let r=0;r<5;r++)for(let c=0;c<4;c++){const x=-1.95+c*1.25,y=-1.65+r*.8;rod(shell,[x+.28,y+.2,side*2.52],[x-.20,y+.2,side*2.52],.033);rod(shell,[x-.20,y+.2,side*2.52],[x-.27,y,side*2.52],.033);rod(shell,[x-.27,y,side*2.52],[x+.28,y,side*2.52],.033)}
+ }
+ for(const side of [-1,1])for(let c=0;c<5;c++){const q=-2.2+c*1.1;rod(shell,[q,-2.3,side*3.0],[q,2.5,side*3.0],.05,pipeM);rod(shell,[side*3.0,-2.3,q],[side*3.0,2.5,q],.05,pipeM);for(const y of [-1.2,.4,1.9]){rod(shell,[q,y,side*2.62],[q,y,side*3.0],.03,pipeM);rod(shell,[side*2.62,y,q],[side*3.0,y,q],.03,pipeM)}}
+ for(const [x,z] of [[-2.6,2.95],[1.1,-2.95],[2.95,.6]])box(shell,x,-.6,z,.18,.5,.12,strap);
+ const fixtures=new THREE.Group();shell.add(fixtures);
+ for(const a of (door?[[1.55,.4],[-1.8,1.1]]:[[1.1,1.35],[.8,-.1],[-.3,-1.3],[1.4,-1.4]]))flange(fixtures,a[0],a[1],2.5,door&&a[0]<0);
+ if(!door)fixtures.rotation.y=Math.PI; // 후면부 플랜지는 반대쪽(-z) → A안 최종에서 두 조각 플랜지면이 같은 쪽(+x)
+ if(door){
+  for(const s of [-1,1]){box(shell,0,2,s*2.44,5.15,.19,.25,rust);box(shell,s*2.44,2,0,.25,.19,5.15,rust)}
+  for(let i=-1;i<=1;i++)box(shell,0,1.70,i*1.40,4.7,.12,.10,rust);
+  rod(shell,[-2.2,1.7,-2.2],[2.2,1.7,2.2],.045,rust);rod(shell,[-2.2,1.7,2.2],[2.2,1.7,-2.2],.045,rust);
+  for(let i=-1;i<=1;i++){box(shell,i*1.8,1.7,2.9,.19,.6,.17,dark);rod(shell,[i*1.8,1.4,2.94],[i*1.8,2.35,2.94],.038);const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.025,18),beam);wheel.position.set(i*1.8,2.37,2.94);shell.add(wheel)}
+ }else{box(shell,0,1.97,0,4.9,.12,4.9,steel);for(let i=0;i<9;i++)box(shell,-2.3+i*.575,2.14,0,.09,.31,5.1);rod(shell,[-2.6,2.4,-2.3],[2.6,2.4,-2.3],.04);rod(shell,[-2.6,2.4,2.3],[2.6,2.4,2.3],.04);const cap=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.25,18),blue);cap.position.set(.75,2.22,.55);shell.add(cap)}
+ const color=door?0x36cce0:0xf2a346,edgeMat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.82});
+ for(const s of [-1,1]){rod(shell,[-2.5,2.2,s*2.5],[2.5,2.2,s*2.5],.035,edgeMat);rod(shell,[s*2.5,2.2,-2.5],[s*2.5,2.2,2.5],.035,edgeMat)}
+ return {root,shell,fixtures};}
+const one=tank(true),two=tank(false);
+const loc=(x,y)=>new THREE.Vector3((x-796.5)/15,0,(y-493.5)/15);
+const start1=loc(1030,483),start2=loc(940,497);
+const baseCenter=loc(1124,474.5);
+const dest=loc(845,372);
+// ---------------- 베이스: 기존 철판 조방 + H빔 10m 2본(길이 방향) + 양 끝 3m 빔 용접
+const JH=.5,HB=.25,SH=JH+HB;
+const base=new THREE.Group();base.position.copy(baseCenter);scene.add(base);
+const J0=new THREE.Group(),B1=new THREE.Group(),B2=new THREE.Group();base.add(J0);base.add(B1);base.add(B2);
+for(const x of [-1.4,1.4])box(J0,x,.25,0,.2,.5,7,jigMat);for(const z of [-3,-1,1,3])box(J0,0,.25,z,3,.5,.2,jigMat);box(J0,0,.49,0,3,.02,7,jigMat);
+for(const x of [-1.375,1.375])box(B1,x,JH+HB/2,0,.25,HB,10,newSteel);
+for(const z of [-4.875,4.875])box(B2,0,JH+HB/2,z,2.5,HB,.25,newSteel);
+// ---------------- 사상·용접 표시
+const grindMat=new THREE.MeshBasicMaterial({color:0xffa139}),weldMat=new THREE.MeshBasicMaterial({color:0x8ce5ff});
+function bandU(h){const g=new THREE.Group();scene.add(g);box(g,0,h,0,6.3,.06,.06,grindMat);box(g,-3.15,h/2,0,.06,h,.06,grindMat);box(g,3.15,h/2,0,.06,h,.06,grindMat);box(g,0,0,0,6.3,.06,.06,grindMat);return g}
+const band1=bandU(6.3),band2=bandU(6.3);
+const spark=new THREE.Mesh(new THREE.SphereGeometry(.14,12,12),weldMat);scene.add(spark);
+// ---------------- 크레인 (250톤 1대)
+const craneRed=new THREE.MeshStandardMaterial({color:0xc9452e,roughness:.6,metalness:.2});
+function crane(material,scale=1){const g=new THREE.Group();scene.add(g);const body=new THREE.Group();g.add(body);body.scale.setScalar(scale);
+ box(body,0,.65,0,5,.6,2.25,material);box(body,1.6,1.3,0,1.6,.9,2.1,material);box(body,-.4,1.35,0,2.2,.7,2.0,material);
+ for(const side of [-1,1])for(let j=0;j<4;j++)box(body,-1.9+j*1.25,.38,side*1.13,.7,.7,.32,dark);
+ for(const sx of [-1,1]){box(body,sx*1.9,.28,0,.22,.16,6.6,dark);for(const sz of [-1,1])box(body,sx*1.9,.12,sz*3.2,.9,.12,.9,dark)}
+ const boom=rod(scene,[0,1,0],[0,10,0],.22*scale,material),cable=rod(scene,[0,10,0],[0,2,0],.035,dark),hook=box(scene,0,0,0,.55,.9,.55,dark);
+ return {g,body,boom,cable,hook,pos:new THREE.Vector3(),material}}
+const big=crane(craneRed,1.3);
+const ropeMat=new THREE.MeshBasicMaterial({color:0xffdc58});
+const slings=Array.from({length:4},()=>rod(scene,[0,0,0],[0,1,0],.05,ropeMat));
+function stretch(mesh,a,b){const v=b.clone().sub(a);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.clone().normalize());mesh.scale.set(1,v.length()/mesh.geometry.parameters.height,1)}
+const CR=new THREE.Vector3(13.6,0,-9.2);big.pos.copy(CR);big.g.position.copy(CR);
+function rig(anchors,engaged,hookUp){
+ const basePt=new THREE.Vector3(CR.x,1.6,CR.z);
+ if(!engaged){const tip=new THREE.Vector3(CR.x+2.5,12,CR.z+1);stretch(big.boom,basePt,tip);big.cable.visible=false;big.hook.visible=false;slings.forEach(m=>m.visible=false);return}
+ const hook=anchors.reduce((v,p)=>v.add(p),new THREE.Vector3()).multiplyScalar(1/anchors.length);hook.y=Math.max(...anchors.map(p=>p.y))+hookUp;
+ const tip=hook.clone();tip.y+=4;stretch(big.boom,basePt,tip);big.cable.visible=true;stretch(big.cable,tip,hook);big.hook.visible=true;big.hook.position.copy(hook);
+ slings.forEach((m,i)=>{const a=anchors[i%anchors.length];m.visible=i<anchors.length||anchors.length===2;stretch(m,hook.clone().add(new THREE.Vector3(0,-.45,0)),a)});
+}
+// ---------------- 카메라
+const cam=new THREE.OrthographicCamera(-26,26,14.625,-14.625,.1,150);const focus=loc(960,455);cam.position.set(focus.x,65,focus.z);cam.up.set(0,0,-1);cam.lookAt(focus);
+const SX=Number(Q.get('sx')||30),SY=Number(Q.get('sy')||26),SZ=Number(Q.get('sz')||8),SF=Number(Q.get('sf')||42);const sideT=new THREE.Vector3(Number(Q.get('tx')||11),0,Number(Q.get('tz')||-3));const side=new THREE.PerspectiveCamera(SF,16/9,.1,400);side.position.copy(sideT).add(new THREE.Vector3(SX,SY,SZ));side.lookAt(sideT);
+const detail=new THREE.PerspectiveCamera(38,16/9,.1,150);
+const qz=a=>new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),a),qy=a=>new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),a);
+const rad=d=>d*Math.PI/180;
+function f(t,a,b){if(!a&&a!==0)return 0;const q=Math.max(0,Math.min(1,(t-a)/(b-a)));return q*q*(3-2*q)}
+const F=(t,r)=>r?f(t,r[0],r[1]):0;
+// ---------------- 공정 타임라인
+const S={
+ setup:[0,3],
+ p:[{rig:[3,4],tip:[4,8],release:[8,9],rerig:[9,10],lift:[10,12],move:[12,17],set:[17,19],yawPreAng:0,flipAng:-90,yawPost:90},
+    {rig0:[19,20],lift0:[20,22],yaw:[22,25],down0:[25,27],rig:[27,28],tip:[28,32],release:[32,33],rerig:[33,34],lift:[34,36],move:[36,41],set:[41,43],yawPreAng:180,flipAng:90,yawPost:90}],
+ grind:[43,47],close:[47,50],weld:[50,55],
+ fin:{rig:[55,56],lift:[56,58],move:[58,65],set:[65,67]},end:[67,71],total:71
+};
+window.TOTAL=S.total+HOLD;
+const STAGES=[
+ [-HOLD,0,'현재 상태 · 1번(도어부) 도어시트 상부, 2번(후면부) 절단면 모두 바닥'],
+ [0,1.5,'베이스 ① 기존 철판 조방 위에 H빔 10m 2본을 길이 방향으로 배치'],[1.5,3,'베이스 ② 양 끝에 3m 빔을 직각으로 대고 10m 빔과 용접'],
+ [3,4,'1번 · 250톤 상단 모서리 결속'],[4,8,'1번 · 하단 모서리를 땅에 둔 채 상단을 들어 시계 90° 반전'],[8,9,'1번 · 줄걸이 해제'],[9,10,'1번 · 새 상단 4점에 재결속'],[10,12,'1번 · 인양'],[12,17,'1번 · 선회하며 베이스로 이동 (도어 → 화면 위)'],[17,19,'1번 · 베이스 위 안착'],
+ [19,20,'2번 · 250톤 상단 4점 결속'],[20,22,'2번 · 인양'],[22,25,'2번 · 공중 수평 180° 회전'],[25,27,'2번 · 원래 자리에 내려놓기'],[27,28,'2번 · 상단 모서리 재결속'],[28,32,'2번 · 하단 모서리를 땅에 둔 채 상단을 들어 반시계 90° 반전'],[32,33,'2번 · 줄걸이 해제'],[33,34,'2번 · 새 상단 4점에 재결속'],[34,36,'2번 · 인양'],[36,41,'2번 · 선회하며 베이스로 이동'],[41,43,'2번 · 사상 간격 600mm 남기고 베이스 위 안착'],
+ [43,47,'절단면 사상 · 개선 가공'],[47,50,'밀착 · 정렬 · 가접'],[50,55,'접합부 용접'],
+ [55,56,'완성품 · 250톤 상단 4점 결속'],[56,58,'완성품 약 86t 인양'],[58,65,'완성품 · 선회하며 최종 이동 장소로 이동'],[65,67,'완성품 · 최종 이동 장소 안착'],[67,99,'완료 · 최종 이동 장소 안착, 베이스 회수']
+];
+const stageOf=T=>{for(const s of STAGES)if(T>=s[0]&&T<s[1])return s[2];return STAGES[STAGES.length-1][2]};
+// ---------------- 자세 계산
+const EXT=[[-3,3],[-2.3,2.5],[-3,3]];
+function ext(q,fn){let m=fn===Math.min?Infinity:-Infinity;for(const x of EXT[0])for(const y of EXT[1])for(const z of EXT[2])m=fn(m,new THREE.Vector3(x,y,z).applyQuaternion(q).y);return m}
+function pose(i,T){const s=S.p[i];const yp=F(T,s.yaw)||(s.yawPreAng&&T>=(s.yaw?s.yaw[1]:0)?1:0),r=F(T,s.tip),mv=F(T,s.move);
+ const ypx=s.yaw?F(T,s.yaw):0;
+ const lift=3*(F(T,s.lift0)-F(T,s.down0)+F(T,s.lift)-F(T,s.set));
+ const q0=qy(rad(s.yawPreAng)*ypx);
+ const q=qy(rad(s.yawPost)*mv).multiply(qz(rad(s.flipAng)*r)).multiply(q0);
+ // 반전 축: 하단 모서리 (반전 방향 쪽)
+ const piv=new THREE.Vector3(s.flipAng<0?3:-3,-2.3,0);
+ const qr=qz(rad(s.flipAng)*r);
+ const off=piv.clone().sub(piv.clone().applyQuaternion(qr));off.y=0;
+ return {q,lift,mv,r,s,off,ypx}}
+// 크레인 중심 기준 선회 경로
+function arc(a,b,k){const A=a.clone().sub(CR),B=b.clone().sub(CR);const r0=Math.hypot(A.x,A.z),r1=Math.hypot(B.x,B.z);let t0=Math.atan2(A.z,A.x),t1=Math.atan2(B.z,B.x);let d=t1-t0;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
+ const th=t0+d*k,rr=r0+(r1-r0)*k;return new THREE.Vector3(CR.x+rr*Math.cos(th),0,CR.z+rr*Math.sin(th))}
+function place(tank,start,end,p){tank.shell.quaternion.copy(p.q);const s0=start.clone().add(p.off);tank.root.position.copy(p.mv>0?arc(s0,end,p.mv):s0);tank.root.position.y=-ext(p.q,Math.min)+.06+p.lift+SH*p.mv}
+const TOP0=[[-2.45,2,-2.3],[-2.45,2,2.3],[2.45,2,-2.3],[2.45,2,2.3]].map(p=>new THREE.Vector3(...p));
+function newTop(s){const q=qz(rad(s.flipAng)).multiply(qy(rad(s.yawPreAng)));const up=new THREE.Vector3(0,1,0).applyQuaternion(q.clone().invert());const ax=Math.abs(up.x)>.5?'x':Math.abs(up.y)>.5?'y':'z';const sg=Math.sign(up[ax]);const E={x:2.45,y:1.85,z:2.3};const o=['x','y','z'].filter(k=>k!==ax);const pts=[];for(const a of [-1,1])for(const b of [-1,1]){const v=new THREE.Vector3();v[ax]=sg*E[ax];v[o[0]]=a*E[o[0]];v[o[1]]=b*E[o[1]];pts.push(v)}return pts}
+// 반전 때 거는 상단 모서리 (축 반대편): 반전 전 자세 기준
+function tipEdge(s){const x=s.flipAng<0?-2.45:2.45;const inv=qy(-rad(s.yawPreAng));return [[x,2,-2.3],[x,2,2.3]].map(p=>new THREE.Vector3(...p).applyQuaternion(inv))}
+const world=(tank,pts)=>pts.map(p=>p.clone().applyQuaternion(tank.shell.quaternion).add(tank.root.position));
+// 2D
+function label(txt,x,y,accent='#fff',size=24){ctx.font=`500 ${size}px ${FONT}`;const w=ctx.measureText(txt).width+28;ctx.fillStyle='rgba(15,26,35,.86)';ctx.fillRect(x-w/2,y-size,w,size+12);ctx.fillStyle=accent;ctx.textAlign='center';ctx.fillText(txt,x,y)}
+function project(v,c){const p=v.clone().project(c);return [(p.x*.5+.5)*1920,(-p.y*.5+.5)*1080]}
+function rectAt(c,center,col,dash,txt,hw=3.1,hd=3.1){const q=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]].map(([x,z])=>project(center.clone().add(new THREE.Vector3(x,.05,z)),c));ctx.save();ctx.strokeStyle=col;ctx.lineWidth=3;ctx.setLineDash(dash);ctx.beginPath();q.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.stroke();ctx.restore();if(txt){const tp=q.reduce((m,p)=>p[1]<m[1]?p:m,q[0]);ctx.font=`600 20px ${FONT}`;const w=ctx.measureText(txt).width;ctx.fillStyle='rgba(15,26,35,.72)';ctx.fillRect(tp[0]-w/2-8,tp[1]-34,w+16,28);ctx.fillStyle=col;ctx.textAlign='center';ctx.fillText(txt,tp[0],tp[1]-13)}}
+function arrow(a,b,col,w=5,dash=[]){ctx.save();ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=w;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.setLineDash([]);const ang=Math.atan2(b[1]-a[1],b[0]-a[0]);ctx.beginPath();ctx.moveTo(b[0],b[1]);ctx.lineTo(b[0]-22*Math.cos(ang-.45),b[1]-22*Math.sin(ang-.45));ctx.lineTo(b[0]-22*Math.cos(ang+.45),b[1]-22*Math.sin(ang+.45));ctx.closePath();ctx.fill();ctx.restore()}
+function callout(txt,x,y){ctx.font=`700 34px ${FONT}`;const w=ctx.measureText(txt).width+36;ctx.fillStyle='rgba(200,30,30,.9)';ctx.fillRect(x-w/2,y-38,w,52);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(txt,x,y)}
+// ---------------- 프레임
+window.renderFrame=function(TT){
+ const T=TT-HOLD,t=Math.max(0,T);
+ const p1=pose(0,t),p2=pose(1,t);
+ const closing=f(t,...S.close),sep=5.6-closing*.6;
+ const target1=baseCenter.clone().add(new THREE.Vector3(0,0,-sep/2-2.5+2.5)),target2=baseCenter.clone().add(new THREE.Vector3(0,0,sep/2));
+ target1.z=baseCenter.z-sep/2;
+ place(one,start1,target1,p1);place(two,start2,target2,p2);
+ // 베이스
+ B1.visible=t>=0;B1.scale.y=Math.max(.01,f(t,0,1.5));B2.visible=t>=1.5;B2.scale.y=Math.max(.01,f(t,1.5,3));
+ // 완성품 이동
+ const fm=f(t,...S.fin.move),fl=3.5*(f(t,...S.fin.lift)-f(t,...S.fin.set));
+ if(t>=S.fin.lift[0]){const c=arc(baseCenter,dest,fm);const d=c.clone().sub(baseCenter);for(const tk of [one,two]){tk.root.position.add(d);tk.root.position.y+=fl-SH*fm}}
+ base.visible=t<S.end[0]+.5;
+ // 사상·용접 표시
+ const sprog=t>=S.grind[0]&&t<S.weld[1];band1.visible=band2.visible=sprog;
+ band1.position.set(baseCenter.x,SH,target1.z+2.32);band2.position.set(baseCenter.x,SH,target2.z-2.32);
+ const wm=t>=S.weld[0]?weldMat:grindMat;[band1,band2].forEach(g=>g.children.forEach(m=>m.material=wm));
+ spark.visible=sprog;
+ {const ph=((t-S.grind[0])%4)/4,a=ph*4;let sx,sy;if(a<1){sx=-3.15+6.3*a;sy=6.3}else if(a<2){sx=3.15;sy=6.3*(2-a)}else if(a<3){sx=3.15-6.3*(a-2);sy=0}else{sx=-3.15;sy=6.3*(a-3)}
+  spark.position.set(baseCenter.x+sx,SH+sy,t<S.close[0]?target1.z+2.32:baseCenter.z)}
+ // 결속
+ const act=t<S.p[1].rig0[0]?0:1,tk=act?two:one,sp=S.p[act];
+ let anchors=null,hookUp=4;
+ const inR=r=>r&&t>=r[0];
+ if(t>=S.fin.rig[0]&&t<S.fin.set[1]){const top=Math.max(ext(one.shell.quaternion,Math.max)+one.root.position.y,ext(two.shell.quaternion,Math.max)+two.root.position.y)-.5;const cx=(one.root.position.x+two.root.position.x)/2;
+  const z1=Math.min(one.root.position.z,two.root.position.z)-2.3,z2=Math.max(one.root.position.z,two.root.position.z)+2.3;anchors=[[cx-2.45,top,z1],[cx-2.45,top,z2],[cx+2.45,top,z1],[cx+2.45,top,z2]].map(p=>new THREE.Vector3(...p));hookUp=5}
+ else if(t<S.grind[0]){
+  if(sp.rig0&&t>=sp.rig0[0]&&t<sp.down0[1])anchors=world(tk,TOP0);
+  else if(t>=sp.rig[0]&&t<sp.release[1])anchors=world(tk,tipEdge(sp));
+  else if(t>=sp.rerig[0]&&t<sp.set[1])anchors=world(tk,newTop(sp));
+ }
+ rig(anchors||[],!!anchors,hookUp);
+ // ---------------- 렌더
+ const stage=stageOf(T);
+ let cen;
+ if(T<0)cen=start1.clone().add(start2).multiplyScalar(.5).add(new THREE.Vector3(0,2,0));
+ else if(t<S.p[0].rig[0])cen=baseCenter.clone().add(new THREE.Vector3(0,.6,0));
+ else if(t<S.grind[0])cen=tk.root.position.clone();
+ else if(t<S.fin.rig[0])cen=baseCenter.clone().add(new THREE.Vector3(0,3,0));
+ else cen=one.root.position.clone().add(two.root.position).multiplyScalar(.5);
+ let off=new THREE.Vector3(11.5,9,14.5);if(T<0)off=new THREE.Vector3(14,7,15);if(t>=S.fin.rig[0])off=new THREE.Vector3(13,12,17);
+ if(VIEW==='closeup'){const d=cen.clone().add(off);detail.position.copy(d);detail.lookAt(cen);renderer.setSize(1920,1080,false);renderer.render(scene,detail);ctx.clearRect(0,0,1920,1080);ctx.drawImage(renderer.domElement,0,0);
+  const C=detail;
+  const used=[];for(const [tank,name,color] of [[one,`1번 · ${W1}톤 · 도어부`,'#6de2eb'],[two,`2번 · ${W2}톤 · 후면부`,'#ffd08e']]){const p=project(tank.root.position.clone().add(new THREE.Vector3(0,4.2,0)),C);if(p[0]>80&&p[0]<1840&&p[1]>120&&p[1]<1000){label(name,p[0],p[1],color);used.push(p)}}
+  {const p=project(CR.clone().add(new THREE.Vector3(0,3.5,0)),C);if(p[0]>100&&p[0]<1820&&p[1]>120&&p[1]<1000&&used.every(q=>Math.abs(q[0]-p[0])>260||Math.abs(q[1]-p[1])>60))label('250톤 크레인',p[0],p[1],'#ffb3a7',22)}
+  if(t<S.p[0].rig[0]&&T>=0){const lines=['기존 철판 조방 위에 설치','H빔 10m 2본 · 길이 방향','양 끝 3m 빔 직각 배치 · 용접','그 위에 건조로 안착','공사 후 회수'];
+   ctx.fillStyle='rgba(13,25,34,.86)';ctx.fillRect(1380,120,520,70+lines.length*30);ctx.fillStyle='#ffe2a3';ctx.font=`600 24px ${FONT}`;ctx.textAlign='left';ctx.fillText('임시 베이스 구성',1400,158);ctx.fillStyle='#e9eff2';ctx.font=`21px ${FONT}`;lines.forEach((l,i)=>ctx.fillText(l,1400,196+i*30))}
+  if(T<0)callout('현재 상태 · 세부 화면',960,990);
+ }else{
+  const C=VIEW==='side'?side:cam,P=v=>project(v,C);renderer.setSize(1920,1080,false);renderer.setViewport(0,0,1920,1080);renderer.render(scene,C);ctx.clearRect(0,0,1920,1080);ctx.drawImage(renderer.domElement,0,0);
+  const SV=VIEW==='side';
+  if(t<S.p[0].move[1]&&!(t>=S.p[0].move[0]))rectAt(C,start1,'rgba(255,70,60,.95)',[],'현 위치 1번');
+  if(t<S.p[1].move[0])rectAt(C,start2,'rgba(255,70,60,.95)',[],'현 위치 2번');
+  if(t<S.p[1].set[1])rectAt(C,baseCenter,'rgba(255,214,60,.95)',[12,8],'베이스 (안착·용접 위치)',3.1,5.6);
+  if(t<S.fin.set[1])rectAt(C,dest,'rgba(120,235,140,.95)',[12,8],'최종 이동 장소',3.1,5.6);
+  if(T<0||(t>=S.weld[1]&&t<S.fin.move[0]))arrow(P(baseCenter.clone().add(new THREE.Vector3(-3.6,0,-1))),P(dest.clone().add(new THREE.Vector3(3.6,0,1))),'rgba(120,235,140,.95)',5,[16,10]);
+  if(T>=0&&t<S.p[0].move[0])arrow(P(start1.clone().add(new THREE.Vector3(1.5,0,-1))),P(baseCenter.clone().add(new THREE.Vector3(-3.4,0,-2))),'rgba(110,226,235,.95)',5,[16,10]);
+  if(t>=S.p[0].set[0]&&t<S.p[1].move[0])arrow(P(start2.clone().add(new THREE.Vector3(1.5,0,1.2))),P(baseCenter.clone().add(new THREE.Vector3(-3.4,0,2))),'rgba(255,208,142,.95)',5,[16,10]);
+  const dn=new THREE.Vector3(0,1,0).applyQuaternion(one.shell.quaternion);
+  if(t<S.p[1].set[1]){const c=one.root.position.clone();const hz=new THREE.Vector3(dn.x,0,dn.z);if(hz.length()<.3){const p=P(c);ctx.save();ctx.strokeStyle='#6de2eb';ctx.lineWidth=4;ctx.beginPath();ctx.arc(p[0],p[1],16,0,7);ctx.stroke();ctx.beginPath();ctx.arc(p[0],p[1],5,0,7);ctx.fillStyle='#6de2eb';ctx.fill();ctx.restore();label(dn.y>0?'도어시트: 상부(하늘 방향)':'도어시트: 하부',p[0],p[1]+52,'#6de2eb')}else{hz.normalize();const a=P(c),b=P(c.clone().add(hz.multiplyScalar(5.5)));arrow(a,b,'#6de2eb',6);label('도어시트 방향',b[0],b[1]-16,'#6de2eb')}}
+  if(t<S.p[0].rig[0]){const p=P(two.root.position);label('후면부 · 절단면 바닥',p[0],p[1]+52,'#ffd08e')}
+  let rot=null;const s0=S.p[0],s1=S.p[1];
+  if(t>=s0.tip[0]&&t<s0.tip[1])rot=[one,'반전 · 하단 모서리 축 시계 90°'];else if(t>=s1.yaw[0]&&t<s1.yaw[1])rot=[two,'회전 · 공중 수평 180°'];else if(t>=s1.tip[0]&&t<s1.tip[1])rot=[two,'반전 · 하단 모서리 축 반시계 90°'];else if(t>=S.fin.move[0]&&t<S.fin.move[1])rot=[null,'완성품 이동 · 250톤 단독'];
+  if(rot){const p=rot[0]?P(rot[0].root.position.clone().add(new THREE.Vector3(-4,0,-3.5))):P(one.root.position.clone().add(new THREE.Vector3(-3,0,-8)));callout(rot[1],p[0],p[1])}
+  {const p=P(CR.clone().add(SV?new THREE.Vector3(0,5,0):new THREE.Vector3(0,0,-4.4)));label('250톤 크레인 · 단독 작업',p[0],p[1],'#ffb3a7')}
+  for(const [tank,name,color] of [[one,`1번 · ${W1}톤 · 도어부`,'#6de2eb'],[two,`2번 · ${W2}톤 · 후면부`,'#ffd08e']]){if(t>=S.fin.rig[0]&&tank===one)continue;const p=P(tank.root.position.clone().add(SV?new THREE.Vector3(0,5.2,0):new THREE.Vector3(0,0,tank===one?-3.6:3.6)));label(t>=S.fin.rig[0]?`완성품 · 약 ${Number(W1)+Number(W2)}톤`:name,p[0],p[1]+(SV?0:(tank===one?-6:30)),t>=S.fin.rig[0]?'#9df0a8':color)}
+  // 정보 패널
+  const px=24,py=112;const lines=[['사용 기중기','#ffe2a3',22],['250톤 1대 (위쪽 1회 설치, 단독)','#e9eff2'],['  반전: 하단 모서리를 축으로 상단 인양','#e9eff2'],['  안착·완성품 이동 모두 단독','#e9eff2'],['대상물','#ffe2a3',22],[`1번 도어부 ${W1}톤 · 시계 90°`,'#6de2eb'],[`2번 후면부 ${W2}톤 · 180° → 반시계 90°`,'#ffd08e'],[`완성품 약 ${Number(W1)+Number(W2)}톤 → 최종 이동 장소`,'#9df0a8'],['■ 현 위치   ┅ 이동 장소','#ff8a80'],...(SV?[['위·아래·왼쪽 표기는 항공사진 기준','#aab6bf']]:[])];
+  ctx.fillStyle='rgba(13,25,34,.88)';ctx.fillRect(px,py,450,30+lines.length*28);ctx.textAlign='left';let yy=py+34;for(const [tx,col,sz] of lines){ctx.fillStyle=col;ctx.font=sz?`600 ${sz}px ${FONT}`:`19px ${FONT}`;ctx.fillText(tx,px+18,yy);yy+=28}
+  if(T<0)callout('현재 상태 · 현 위치',960,938);
+ }
+ ctx.fillStyle='rgba(13,25,34,.88)';ctx.fillRect(0,0,1920,98);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font=`500 30px ${FONT}`;ctx.fillText(`진공건조로 · 250톤 단독 · 안착·용접 후 이동 · ${VIEW==='closeup'?'세부 화면':VIEW==='side'?'우측 상부뷰':'현장 항공뷰'}`,36,42);ctx.font=`23px ${FONT}`;ctx.fillText(stage,36,78);
+ ctx.fillStyle='rgb(13,25,34)';ctx.fillRect(690,1024,1230,56);ctx.fillStyle='#e9eff2';ctx.textAlign='left';ctx.font=`21px ${FONT}`;ctx.fillText('크레인 위치·줄걸이는 개념 표현',714,1058);
+ return stage;
+};
+window.renderFrame(0);window.ready=true;
+</script></body></html>

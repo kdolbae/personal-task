@@ -76,7 +76,7 @@ def prep(wb, index=None):
         hdr=["No","시트","내용","페이지"]
         desc={"견적서":"표지·공종 합계·특기사항","원가계산서":"비목별 원가 집계","AB비교":"A안·B안 금액 비교","산출근거":"항목별 산출식·근거",
               "도비":"도비 내역","용접":"용접 내역","베이스":"베이스 내역","B_도비":"B안 도비 내역","B_용접":"B안 용접 내역","B_조방":"B안 조방 개조 내역",
-              "베이스자재":"H빔 자재 산출","공정표":"공정표 (가정 일정 10/21~11/2)"}
+              "베이스자재":"H빔 자재 산출","공정표":"공정표 (가정 일정 10/21~11/3)"}
         thin=Side(style='thin',color=C_LINE)
         for c,h in enumerate(hdr,1):
             x=ix.cell(4,c,h); x.font=Font(name=FN_SB,size=10,color=C_TEXT); x.fill=PatternFill('solid',fgColor=C_HEAD); x.alignment=Alignment(horizontal='center')

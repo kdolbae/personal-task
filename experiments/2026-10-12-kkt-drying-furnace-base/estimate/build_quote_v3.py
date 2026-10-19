@@ -29,7 +29,7 @@ LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
 RIGHT = Alignment(horizontal="right", vertical="center")
 
 QNO = "NM-2610-01"
-QDATE = "2026-10-13"
+QDATE = "2026-10-19"
 SUP = {"name": "엔엠솔루션", "en": "NM SOLUTION", "ceo": "김성배",
        "addr": "경기도 평택시 고덕동 도시지원로 121 지식공장아이타워 906호",
        "tel": "1800-5901", "mobile": "010-2369-3691", "web": "nm-solution.co.kr", "bizno": ""}
@@ -84,20 +84,20 @@ def expense():  # 사용자 지시(2026-10-12): 간식·음료·교통비 등을
 
 # (구분, 항목, 규격, 단위, 수량, 단가, 비고, 비목 M/L/E, 산출식, 근거, 노임참고)
 DOBI = [
-    ("노무비", "도비 전문기공", "회전·안착·밀착 이동", "인·일", 15, 300_000, "안착일 6명 + 밀착 이동 6명·3명 (6, 6, 3)", "L",
-     "(6 + 6 + 3)명 × 300,000원", "인원 " + U + " (2026-10-12), 단가 " + SH, None),
-    ("노무비", "신호수", "크레인 인양 신호", "인·일", 2, R_SIGNAL, "2명 × 1일 (안착일)", "L",
-     "2명 × 1일 × 260,000원", AS, None),
-    ("노무비", "안전담당 (관리감독자)", "작업 전 TBM·인양구역 통제", "인·일", 3, R_SAFE, "1명 × 3일", "L",
-     "1명 × 3일 × 320,000원", AS, None),
-    ("장비", "크레인", "100TON", "대·일", 1, 2_400_000, "안착일 1일", "E", "1대 × 1일 × 2,400,000원", U, None),
-    ("장비", "크레인", "60TON", "대·일", 1, 1_700_000, "안착일 1일", "E", "1대 × 1일 × 1,700,000원", U, None),
+    ("노무비", "도비 전문기공", "회전·안착·밀착·완성품 이동", "인·일", 21, 300_000, "안착일 6명 + 밀착 6명·3명 + 이동일 6명 (6, 6, 3, 6)", "L",
+     "(6 + 6 + 3 + 6)명 × 300,000원", "인원 " + U + " (2026-10-19), 단가 " + SH, None),
+    ("노무비", "신호수", "크레인 인양 신호", "인·일", 4, R_SIGNAL, "2명 × 2일 (안착일 + 이동일)", "L",
+     "2명 × 2일 × 260,000원", AS, None),
+    ("노무비", "안전담당 (관리감독자)", "작업 전 TBM·인양구역 통제", "인·일", 4, R_SAFE, "1명 × 4일", "L",
+     "1명 × 4일 × 320,000원", AS, None),
+    # 2026-10-19 kevin: 250톤 1대 단독 작업(다른 크레인 없음). 250t 1일 단가 5,000,000원은 기본값(업체 견적 없음)
+    ("장비", "크레인", "250TON", "대·일", 2, 5_000_000, "안착일 1일 + 이동일 1일", "E", "1대 × 2일 × 5,000,000원", U, None),
     ("장비", "아웃리거 받침 철판", "1,500×1,500×25t, 8매", "식", 1, 640_000, "아스팔트 지반 보호", "E", "8매 × 80,000원", AS, None),
-    ("장비", "밀착 이동 장비", "유압잭·윈치·스키드", "SET", 1, 2_000_000, "밀착 이동 2일", "E", "1식 (2일)", AS, None),
+    ("장비", "밀착 장비", "유압잭·윈치·스키드", "SET", 1, 2_000_000, "밀착 2일", "E", "1식 (2일)", AS, None),
     ("장비", "공구사용손료", "도비 전문장비·줄걸이구", "SET", 1, 3_000_000, "", "E", "1식", SH, None),
     ("재료비", "소모품·잡자재", "목재 받침·와이어 보호대 등", "식", 1, 1_000_000, "", "M", "1식", SH, None),
-    ("안전시설", "안전펜스 임대", "이동식 메쉬펜스 H1.8×W2.4m", "매·일", 22 * 11, 5_000, "22매(둘레 50m + 출입문) × 11일", "E",
-     "작업구역 10×15m, 둘레 50m ÷ 2.4m = 21매 + 출입문 1매 → 22매 × 11일 × 5,000원", "수량 " + AS + ", 단가 " + U, None),
+    ("안전시설", "안전펜스 임대", "이동식 메쉬펜스 H1.8×W2.4m", "매·일", 22 * 12, 5_000, "22매(둘레 50m + 출입문) × 12일", "E",
+     "작업구역 10×15m, 둘레 50m ÷ 2.4m = 21매 + 출입문 1매 → 22매 × 12일 × 5,000원", "수량 " + AS + ", 단가 " + U, None),
     ("안전시설", "펜스 설치·해체", "설치 인건비", "인·일", 2, 250_000, "설치 2명 × 0.5일 + 해체 2명 × 0.5일", "L",
      "2명 × 1일 × 250,000원", U, None),
     ("안전시설", "펜스 운반", "1톤 화물 왕복", "회", 2, 260_000, "반입 1 + 반출 1", "E", "2회 × 260,000원", AS, None),
@@ -119,13 +119,14 @@ WELD = [
     ("장비", "그라인더·환기·조명", "송풍기, 투광등 포함", "SET", 1, 800_000, "", "E", "1식", AS, None),
     ("재료비", "용접 소모품", "CO2 가스·와이어·디스크·케이블·잡자재", "식", 1, 3_680_000, "", "M", "1식 (용접재 3,000,000 + 전원 케이블·잡자재 680,000)", AS, None),
     ("장비", "작업발판 장비 임대", "", "식", 1, 1_000_000, "", "E", "1식", U, None),
-    ("장비", "가스절단기 임대", "산소·LPG, 2대 공정기간 상시", "대·일", 22, 100_000, "2대 × 11일", "E", "2대 × 11일 × 100,000원", U, None),
+    ("장비", "가스절단기 임대", "산소·LPG, 2대 공정기간 상시", "대·일", 24, 100_000, "2대 × 12일", "E", "2대 × 12일 × 100,000원", U, None),
     expense_pd(9 + 6 + 4 + 4 + 5, "용접 9 + 고급기술자 6 + 사상 4 + 조공 4 + 화재감시 5"),
 ]
 BASE = [   # 2026-10-16 kevin: 재료비·운반비·노무비(3명 × 1일)만, 법정경비·일반관리비·이윤 미적용
-    ("재료비", "H빔 (회수조건)", "H-250×250×9×14, 10m 4·5m 16·0.6m 30EA", "식", 1, 1_800_000, "공사 후 회수 조건", "M", "1식 (9,991kg)", None, None),
+    # 2026-10-19 kevin: 기존 철판 조방 위 H빔 10m 2본(길이 방향) + 양 끝 3m 빔 직각 용접. 금액은 그대로
+    ("재료비", "H빔 (회수조건)", "H-250×250×9×14, 10m 2EA·3m 2EA", "식", 1, 1_800_000, "공사 후 회수 조건", "M", "1식 (1,882kg)", None, None),
     ("운반비", "H빔 운반", "반입·회수", "식", 1, 160_000, "", "E", "1식", None, None),
-    ("노무비", "시공자", "베이스 제작·설치", "인·일", 3, 350_000, "3명 × 1일", "L", "3명 × 1일 × 350,000원", None, None),
+    ("노무비", "시공자", "베이스 배치·용접·회수", "인·일", 3, 350_000, "3명 × 1일", "L", "3명 × 1일 × 350,000원", None, None),
 ]
 NO_OH = {"베이스"}   # 법정경비·일반관리비·이윤을 붙이지 않는 공종
 
@@ -137,9 +138,9 @@ RATES = [  # key, 항목, 값, 기준, 출처
     ("GEN", "일반관리비", 0.05, "순공사원가 ×", S_RULE + ". 6% 이내에서 5% 적용"),
 ]
 PROFIT = {"도비": 0.15, "용접": 0.15, "베이스": 0.15}   # 이윤율 전 공종 동일 15% (사용자 지정 2026-10-12)
-WORKS = [("도비", DOBI, "진공건조로 2기 회전·베이스 안착(1일), 용접면 밀착 이동(2일), 작업구역 안전펜스"),
+WORKS = [("도비", DOBI, "진공건조로 2기 회전·베이스 안착(1일), 용접면 밀착(2일), 완성품 이동(1일), 작업구역 안전펜스"),
          ("용접", WELD, "접합면 사상(2일) 및 접합부 CO2 용접(3일)"),
-         ("베이스", BASE, "사다리형 일체 임시 베이스 제작·설치 및 공사 후 회수, H-250×250")]
+         ("베이스", BASE, "기존 철판 조방 위 H빔 임시 베이스 설치 및 공사 후 회수, H-250×250")]
 TARGETS = {"도비": 20_000_000, "용접": 25_000_000, "베이스": 18_000_000}
 
 # ---------------------------------------------------------------- B안 (대안): 기존 조방 7×3m 개조 + 전체 90° 회전 후 하부 용접
@@ -205,7 +206,7 @@ def basis(row):
         return "장비 임대 시장 단가, 투입 수량·일수는 공정표 기준"
     if g == "재료비":
         if item.startswith("H빔") and "운임" not in item:
-            return "H빔 9,991kg (베이스자재 시트), 공사 후 회수 조건 1식"
+            return "H빔 1,882kg (베이스자재 시트), 공사 후 회수 조건 1식"
         if item == "보강보":
             return "현장 보유 강재 사용, 자재비 미계상"
         if "운임" in item:
@@ -290,7 +291,7 @@ def page(ws, landscape=False):
 
 # ---------------------------------------------------------------- 적용 요율 (원가계산서 하단 표, 먼저 만들어 셀 주소 확보)
 cs = wb.create_sheet("원가계산서", 1)
-RATE_ROW = 23   # 원가계산서 본표(6~18행)·주석(20행) 아래
+RATE_ROW = 25   # 원가계산서 본표(6~20행)·주석(22행) 아래
 RATE_SRC = {"SAN": "2026년 고용노동부 보험료율 고시 (건설업)", "GOY": "2026년 고용노동부 보험료율 고시 (150인 미만)",
             "SAFE": "고용노동부 산업안전보건관리비 계상기준", "GEN": "6% 이내 적용 (국가계약법 시행규칙 제8조 기준)"}
 cs.cell(RATE_ROW - 1, 1, "적용 요율").font = font(sz=11, sb=True)
@@ -407,6 +408,18 @@ def detail(name, rows, work):
 for nm, rows, work in ALLWORKS:
     detail(nm, rows, work)
 
+# 협의 조정 (2026-10-19 kevin: 최종 견적은 VAT 포함 70,000,000원 그대로)
+GRAND_TARGET = 70_000_000
+SUBTOTAL = sum(CALC[n]["tot"] for n, _, _ in WORKS)
+def supply_for_grand(t):
+    s_ = round(t / 1.1)
+    while s_ + round(s_ / 10) > t: s_ -= 1
+    while s_ + 1 + round((s_ + 1) / 10) <= t: s_ += 1
+    return s_
+ADJ = supply_for_grand(GRAND_TARGET) - SUBTOTAL
+ADJ_LABEL = "협의 조정"
+ADJ_NOTE = "발주처 협의 금액 반영"
+
 # ---------------------------------------------------------------- 원가계산서
 cs.merge_cells("A1:F2"); cs["A1"] = "공 사 원 가 계 산 서"; cs["A1"].font = font(True, 16, C_NAVY); cs["A1"].alignment = CEN
 cs.merge_cells("A3:F3"); cs["A3"] = "공사명 : 진공건조로 회전·안착 및 접합부 용접 공사   |   " + QNO; cs["A3"].font = font(sz=9, color="555555"); cs["A3"].alignment = CEN
@@ -414,7 +427,7 @@ for c, h in enumerate(["비목", "도비", "용접", "베이스", "합계", "구
     x = cs.cell(5, c, h); head_cell(x)
 lines = [("재료비", "M"), ("노무비", "L"), ("경비", "E"), ("산재보험료", "SAN"), ("고용보험료", "GOY"),
          ("산업안전보건관리비", "SAFE"), ("순공사원가", "NET"), ("일반관리비", "GEN"), ("이윤", "PROF"),
-         ("단수정리", "RND"), ("공급가액", "TOT")]
+         ("단수정리", "RND"), ("공종 합계", "TOT")]
 r = 6
 for label, k in lines:
     cs.cell(r, 1, label)
@@ -430,14 +443,18 @@ for label, k in lines:
         if k in ("NET", "TOT"): x.fill = GRAY; x.font = font(True, color=x.font.color.rgb if c in (2, 3, 4) else "000000")
     cs.row_dimensions[r].height = 22
     r += 1
-SUPROW = r - 1
-cs.cell(r, 1, "부가가치세 (10%)"); cs.cell(r, 5, f"=E{SUPROW}*0.1"); VATROW = r; r += 1
+SUMROW = r - 1
+cs.cell(r, 1, ADJ_LABEL); cs.cell(r, 5, ADJ).font = font(color="0000FF"); ADJROW = r; r += 1
+cs.cell(r, 1, "공급가액"); cs.cell(r, 5, f"=E{SUMROW}+E{ADJROW}"); SUPROW = r; r += 1
+cs.cell(r, 1, "부가가치세 (10%)"); cs.cell(r, 5, f"=ROUND(E{SUPROW}*0.1,0)"); VATROW = r; r += 1
 cs.cell(r, 1, "총 공사금액"); cs.cell(r, 5, f"=E{SUPROW}+E{VATROW}"); GRAND = r
-for rr in (VATROW, GRAND):
+for rr in (ADJROW, SUPROW, VATROW, GRAND):
     for c in range(1, 7):
         x = cs.cell(rr, c); x.border = BOX; x.font = font(rr == GRAND); x.alignment = CEN if c == 1 else RIGHT
         if c >= 2: x.number_format = WON
+        if rr == SUPROW: x.fill = GRAY; x.font = font(True)
         if rr == GRAND: x.fill = NAVY; x.font = font(True, color="FFFFFF")
+cs.cell(ADJROW, 6, ADJ_NOTE).font = font(sz=8, color="555555"); cs.cell(ADJROW, 6).alignment = LEFT
 cs.cell(GRAND + 2, 1, "요율: 산재 3.56%·고용 1.15% (노무비 기준), 산업안전보건관리비 3.11% ((재료비 + 노무비) 기준), 일반관리비 5% (순공사원가 기준), 이윤 15%. 근거는 아래 적용 요율 표. 베이스 공종은 회수조건 임시 구조물로 재료비·운반비·노무비만 계상함.").font = font(sz=9, color="555555")
 cs.merge_cells(start_row=GRAND + 2, start_column=1, end_row=GRAND + 2, end_column=6)
 cs.cell(GRAND + 2, 1).alignment = LEFT; cs.row_dimensions[GRAND + 2].height = 30
@@ -445,8 +462,8 @@ setw(cs, {"A": 20, "B": 15, "C": 15, "D": 15, "E": 16, "F": 9})
 page(cs)
 
 # ---------------------------------------------------------------- 견적서 (엔엠솔루션 양식)
-sup_val = sum(CALC[n]["tot"] for n, _, _ in WORKS)
-grand_val = sup_val + sup_val // 10
+sup_val = SUBTOTAL + ADJ
+grand_val = sup_val + round(sup_val / 10)
 WORKNAME = "진공건조로 2분할체 회전·안착, 임시 베이스 제작, 접합부 사상·용접 공사"
 c = cover
 setw(c, {"A": 9, "B": 13, "C": 13, "D": 22, "E": 7, "F": 6, "G": 12, "H": 15, "I": 24})
@@ -502,9 +519,9 @@ for a, b_, h in hdr:
 for cc in range(1, 10): head_cell(c.cell(r, cc))
 c.row_dimensions[r].height = 22
 HEADROW = r; r += 1
-groups = [("도비", "도비 작업: 회전·베이스 안착(100t·60t), 밀착 이동, 안전펜스"),
+groups = [("도비", "도비 작업: 회전·베이스 안착, 밀착, 완성품 이동 (250t 1대), 안전펜스"),
           ("용접", "용접 작업: 접합면 사상, CO2 용접, 화재감시"),
-          ("베이스", "베이스 작업: 임시 사다리형 베이스 제작·설치·회수")]
+          ("베이스", "베이스 작업: 기존 철판 조방 위 H빔 베이스 설치·회수")]
 sub_rows = []
 no = 0
 for key, gtitle in groups:
@@ -528,12 +545,14 @@ for key, gtitle in groups:
     for cc in range(1, 10): c.cell(r, cc).fill = GRAY
     sub_rows.append(r); r += 1
 first_item = HEADROW + 1
-tot_rows = [("공급가액", "=" + "+".join(f"H{x}" for x in sub_rows)), ("부가세 (10%)", f"=H{r}*0.1"), ("합계 (VAT 포함)", f"=H{r}+H{r+1}")]
+tot_rows = [("공종 합계", "=" + "+".join(f"H{x}" for x in sub_rows)), (ADJ_LABEL, ADJ), ("공급가액", f"=H{r}+H{r+1}"),
+            ("부가세 (10%)", f"=ROUND(H{r+2}*0.1,0)"), ("합계 (VAT 포함)", f"=H{r+2}+H{r+3}")]
 for j, (k, f) in enumerate(tot_rows):
-    last = j == 2
+    last = j == len(tot_rows) - 1
     merge_put(c, r, 1, 7, k, font(True, 13 if last else 10, "FFFFFF" if last else C_TEXT), RIGHT, fill=NAVY if last else GRAY)
     x = c.cell(r, 8, f); x.font = font(True, 13 if last else 10, "FFFFFF" if last else C_TEXT)
     for cc in range(1, 10): c.cell(r, cc).fill = NAVY if last else GRAY
+    if k == ADJ_LABEL: c.cell(r, 9, ADJ_NOTE)
     c.row_dimensions[r].height = 26 if last else 20
     r += 1
 SUPROW_C, VATROW_C, GRANDROW_C = r - 3, r - 2, r - 1
@@ -549,10 +568,10 @@ for rr in range(first_item, r):
 r += 1
 c.cell(r, 1, "특기사항").font = font(sz=12, sb=True); c.row_dimensions[r].height = 22; r += 1
 NOTES = [
-    "1. 공사 기간: 2026.10.21 ~ 2026.11.02 (가정 일정, 작업일 11일, 공정표 시트 참조). 날짜는 가정이며 착공일은 발주처 협의로 확정함.",
-    "2. 결제 조건: 선수금 30% (계약 시), 중도금 30% (회전·안착 완료 시), 잔금 40% (용접 완료 후). VAT 포함 기준 18,233,490원 / 18,233,490원 / 24,311,320원.",
+    "1. 공사 기간: 2026.10.21 ~ 2026.11.03 (가정 일정, 작업일 12일, 공정표 시트 참조). 날짜는 가정이며 착공일은 발주처 협의로 확정함.",
+    "2. 결제 조건: 선수금 30% (계약 시), 중도금 30% (회전·안착 완료 시), 잔금 40% (완성품 이동 완료 후). VAT 포함 기준 21,000,000원 / 21,000,000원 / 28,000,000원.",
     "3. 견적 유효기간: 발행일로부터 30일.",
-    "4. 포함: 임시 베이스 제작·설치·회수, 이동식 크레인(100t·60t)·도비, 접합면 사상, CO2 용접, 화재감시, 안전펜스·출입통제.",
+    "4. 포함: 임시 베이스 설치·회수, 이동식 크레인(250t 1대)·도비, 접합면 사상, CO2 용접, 화재감시, 완성품 지정 장소 이동, 안전펜스·출입통제.",
     "5. 제외: 전기 수전, 배관·닥트 해체·복구, 보온, 도장, 비파괴검사(PT/UT), 시운전. 비파괴검사는 발주처 요구 시 별도 정산함.",
     "6. 크레인 사양·배치는 크레인 업체와 협의해 확정하며, 크레인 변경에 따른 추가비용은 없음.",
     "7. 연장·야간·휴일 작업은 공정에 따라 당사가 수행하며 추가 정산하지 않음. 기상(우천 시 용접 불가)·발주처 사유에 따른 대기는 별도 협의함.",
@@ -611,17 +630,17 @@ bs = wb.create_sheet("베이스자재")
 bs["A1"] = "베이스 자재: H-250×250×9×14 (회수조건)"; bs["A1"].font = font(True, 14, C_NAVY)
 for cc, h in enumerate(["길이(m)", "수량(EA)", "총 길이(m)", "단위중량(kg/m)", "중량(kg)"], 1):
     x = bs.cell(3, cc, h); head_cell(x)
-for i, (ln, q) in enumerate([(10, 4), (5, 16), (0.6, 30)]):
+for i, (ln, q) in enumerate([(10, 2), (3, 2)]):
     rr = 4 + i
     bs.cell(rr, 1, ln).font = font(color="0000FF"); bs.cell(rr, 2, q).font = font(color="0000FF")
     bs.cell(rr, 3, f"=A{rr}*B{rr}"); bs.cell(rr, 4, 72.4).font = font(color="0000FF"); bs.cell(rr, 5, f"=C{rr}*D{rr}")
     bs.cell(rr, 5).number_format = '#,##0'
-bs.cell(7, 2, "합계").font = font(True); bs.cell(7, 3, "=SUM(C4:C6)"); bs.cell(7, 5, "=SUM(E4:E6)"); bs.cell(7, 5).number_format = '#,##0'
-border_range(bs, 4, 7, 1, 5)
-for cc in range(1, 6): bs.cell(7, cc).fill = GRAY
+bs.cell(6, 2, "합계").font = font(True); bs.cell(6, 3, "=SUM(C4:C5)"); bs.cell(6, 5, "=SUM(E4:E5)"); bs.cell(6, 5).number_format = '#,##0'
+border_range(bs, 4, 6, 1, 5)
+for cc in range(1, 6): bs.cell(6, cc).fill = GRAY
 for cc, h in enumerate(["구분", "중량(kg)", "수량", "금액(원)", "비고"], 1):
     x = bs.cell(9, cc, h); head_cell(x)
-bs.cell(10, 1, "H빔 (회수조건)"); bs.cell(10, 2, "=E7").number_format = '#,##0'
+bs.cell(10, 1, "H빔 (회수조건)"); bs.cell(10, 2, "=E6").number_format = '#,##0'
 bs.cell(10, 3, "1식")
 bs.cell(10, 4, "=베이스!G8").number_format = WON; bs.cell(10, 5, "공사 후 회수, 사용 기간 손료 개념")
 border_range(bs, 9, 10, 1, 5)
@@ -629,7 +648,7 @@ for cc in range(1, 6):
     x = bs.cell(10, cc)
     if x.font.name != FN: x.font = font()
     x.alignment = LEFT if cc in (1, 5) else RIGHT
-bs.cell(12, 1, "단위중량 72.4 kg/m는 KS H-250×250×9×14 공칭값임. 베이스는 임시 구조물로 방청·도장 미적용.").font = font(sz=9, color="555555")
+bs.cell(12, 1, "기존 철판 조방 위에 10m H빔 2본을 길이 방향으로 놓고, 양 끝에 3m H빔을 직각으로 용접함. 단위중량 72.4 kg/m는 KS H-250×250×9×14 공칭값. 임시 구조물로 방청·도장 미적용.").font = font(sz=9, color="555555")
 setw(bs, {"A": 18, "B": 16, "C": 16, "D": 16, "E": 30})
 page(bs)
 
@@ -638,29 +657,30 @@ ps = wb.create_sheet("공정표")
 import datetime as _dt
 WDAYS = []
 _d = _dt.date(2026, 10, 21)
-while len(WDAYS) < 11:
+while len(WDAYS) < 12:
     if _d.weekday() != 6: WDAYS.append(f"{_d.month}/{_d.day}\n" + "월화수목금토일"[_d.weekday()])
     _d += _dt.timedelta(days=1)
-ps["A1"] = "공정표 (가정 일정 2026.10.21 ~ 11.02, 작업일 11일)"; ps["A1"].font = font(True, 14, C_NAVY)
-steps = [("안전펜스 설치·작업구역 통제", "조공 2명", 1, 1), ("베이스 제작·설치", "시공자 3명", 1, 3),
-         ("회전·베이스 안착 (100t + 60t)", "도비 6명, 신호수 2, 안전담당", 4, 4),
-         ("접합면 사상", "사상 2, 조공 2, 화재감시 1", 5, 6), ("용접면 밀착 이동", "도비 6명·3명, 안전담당", 7, 8),
-         ("접합부 용접", "용접사 3, 고급기술자 2, 화재감시 1", 9, 11), ("펜스 해체·정리", "조공 2명", 11, 11)]
+ps["A1"] = "공정표 (가정 일정 2026.10.21 ~ 11.03, 작업일 12일)"; ps["A1"].font = font(True, 14, C_NAVY)
+steps = [("안전펜스 설치·작업구역 통제", "조공 2명", 1, 1), ("베이스 설치 (H빔 배치·용접)", "시공자 4명", 1, 3),
+         ("회전·베이스 안착 (250t)", "도비 6명, 신호수 2, 안전담당", 4, 4),
+         ("접합면 사상", "사상 2, 조공 2, 화재감시 1", 5, 6), ("용접면 밀착", "도비 6명·3명, 안전담당", 7, 8),
+         ("접합부 용접", "용접사 3, 고급기술자 2, 화재감시 1", 9, 11),
+         ("완성품 이동 (250t)·베이스 회수", "도비 6명, 신호수 2, 안전담당", 12, 12), ("펜스 해체·정리", "조공 2명", 12, 12)]
 ps.cell(3, 1, "공정").font = font(True); ps.cell(3, 2, "투입 인원").font = font(True)
-for d in range(1, 12):
+for d in range(1, 13):
     x = ps.cell(3, 2 + d, WDAYS[d - 1]); x.font = font(True, sz=9); x.alignment = CEN
     ps.column_dimensions[x.column_letter].width = 5.5
 BAR = PatternFill("solid", fgColor="E8742A")
 for i, (nm, crew, a, b) in enumerate(steps):
     rr = 4 + i
     ps.cell(rr, 1, nm).font = font(); ps.cell(rr, 2, crew).font = font()
-    for d in range(1, 12):
+    for d in range(1, 13):
         if a <= d <= b: ps.cell(rr, 2 + d).fill = BAR
-border_range(ps, 3, 3 + len(steps), 1, 13)
-for cc in range(1, 14): ps.cell(3, cc).fill = GRAY; ps.cell(3, cc).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+border_range(ps, 3, 3 + len(steps), 1, 14)
+for cc in range(1, 15): ps.cell(3, cc).fill = GRAY; ps.cell(3, cc).alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
 ps.row_dimensions[3].height = 30
 setw(ps, {"A": 30, "B": 32})
-ps.cell(5 + len(steps), 1, "가정 일정: 2026-10-21(수) 착공 ~ 11-02(월) 완료, 일요일 휴무 기준 작업일 11일. 날짜는 가정이며 착공일은 발주처 협의로 확정함.").font = font(sz=9, color="555555")
+ps.cell(5 + len(steps), 1, "가정 일정: 2026-10-21(수) 착공 ~ 11-03(화) 완료, 일요일 휴무 기준 작업일 12일. 날짜는 가정이며 착공일은 발주처 협의로 확정함.").font = font(sz=9, color="555555")
 page(ps, landscape=True)
 
 
