@@ -14,8 +14,8 @@ nc, np_ = len(rc.pages), len(rp.pages)
 w.add_outline_item("표지", 0)
 w.add_outline_item("문서 구성", 1)
 p_root = w.add_outline_item("Ⅰ. 작업계획서", nc)
-PLAN_SECTIONS = [("1. 공사 개요", 1), ("2. 작업 순서", 2), ("3. 인양계획", 7), ("4. 타임테이블", 8),
-                 ("5. 안전관리 계획", 8), ("6. 확인이 필요한 사항", 9)]
+PLAN_SECTIONS = [("1. 공사 개요", 1), ("2. 작업 순서", 2), ("3. 인양계획", 8), ("4. 타임테이블", 9),
+                 ("5. 안전관리 계획", 9), ("6. 확인이 필요한 사항", 10)]
 for title, pg in PLAN_SECTIONS:
     w.add_outline_item(title, nc + pg - 1, parent=p_root)
 q_root = w.add_outline_item("Ⅱ. 견적서", nc + np_)
